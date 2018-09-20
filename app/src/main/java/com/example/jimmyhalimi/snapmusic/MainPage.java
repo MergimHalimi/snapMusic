@@ -1,6 +1,8 @@
 package com.example.jimmyhalimi.snapmusic;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Environment;
@@ -8,6 +10,8 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+
+import com.camerakit.CameraKit;
 import com.camerakit.CameraKitView;
 
 import android.util.Log;
@@ -27,10 +31,10 @@ import org.opencv.android.OpenCVLoader;
 public class MainPage extends AppCompatActivity {
 
   private CameraKitView cameraKitView;
-  private Button photoButton, btnGallery;
+  private Button photoButton, btnGallery, btnChange;
   private ImageView ivImage;
   private int REQUEST_CAMERA = 0, SELECT_FILE = 1;
-  private boolean camON = false;
+  private boolean camON = false, front = false ;
 
   static {
     System.loadLibrary("native-lib");
@@ -42,6 +46,9 @@ public class MainPage extends AppCompatActivity {
       super.onCreate(savedInstanceState);
       setContentView(R.layout.main_page);
 
+
+
+
       cameraKitView = findViewById(R.id.camera);
       photoButton = findViewById(R.id.photoButton);
       ivImage = (ImageView) findViewById(R.id.ivImage);
@@ -51,6 +58,7 @@ public class MainPage extends AppCompatActivity {
 
               ivImage.setVisibility(View.INVISIBLE);
               cameraKitView.setVisibility(View.VISIBLE);
+              btnChange.setEnabled(true);
               if (camON){
                   cameraKitView.captureImage(new CameraKitView.ImageCallback() {
                       @Override
@@ -64,8 +72,41 @@ public class MainPage extends AppCompatActivity {
                               outputStream.close();
 
                             if (!OpenCVLoader.initDebug()) {
+
+                                AlertDialog.Builder builder1 = new AlertDialog.Builder(MainPage.this);
+                                builder1.setMessage("OpenCVLoader.initDebug(), not working.");
+                                builder1.setCancelable(true);
+
+                                builder1.setPositiveButton(
+                                        "OK",
+                                        new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int id) {
+                                                dialog.cancel();
+                                            }
+                                        });
+
+
+                                AlertDialog alert11 = builder1.create();
+                                alert11.show();
                               //textView.setText(textView.getText() + "\n OpenCVLoader.initDebug(), not working.");
                             } else {
+
+
+                                AlertDialog.Builder builder2 = new AlertDialog.Builder(MainPage.this);
+                                builder2.setMessage("OpenCVLoader.initDebug() working.");
+                                builder2.setCancelable(true);
+
+                                builder2.setPositiveButton(
+                                        "OK",
+                                        new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int id) {
+                                                dialog.cancel();
+                                            }
+                                        });
+
+
+                                AlertDialog alert2 = builder2.create();
+                                alert2.show();
                               //textView.setText(textView.getText() + "\n OpenCVLoader.initDebug(), WORKING.");
                               //DRS 20160822c Added 1
                               //textView.setText(textView.getText() + "\n" + validate(0L, 0L));
@@ -84,6 +125,25 @@ public class MainPage extends AppCompatActivity {
           }
       });
 
+      btnChange = (Button)findViewById(R.id.btnChange);
+      btnChange.setOnClickListener(new View.OnClickListener() {
+          @Override
+          public void onClick(View v) {
+
+                  if(front == false)
+                  {
+                      cameraKitView.setFacing(CameraKit.FACING_FRONT);
+
+                      front = true;
+                  }
+                  else
+                  {
+                      cameraKitView.setFacing(CameraKit.FACING_BACK);
+                      front = false;
+                  }
+
+          }
+      });
 
       btnGallery = (Button) findViewById(R.id.btnGallery);
       btnGallery.setOnClickListener(new View.OnClickListener() {
@@ -94,6 +154,7 @@ public class MainPage extends AppCompatActivity {
               cameraKitView.setVisibility(View.INVISIBLE);
               ivImage.setVisibility(View.VISIBLE);
               camON = false;
+              btnChange.setEnabled(false);
           }
       });
   }
@@ -138,6 +199,7 @@ public class MainPage extends AppCompatActivity {
   protected void onResume() {
       super.onResume();
       cameraKitView.onResume();
+
   }
 
   @Override
