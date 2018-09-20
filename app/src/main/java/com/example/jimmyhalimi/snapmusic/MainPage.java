@@ -27,6 +27,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Mat;
 
 public class MainPage extends AppCompatActivity {
 
@@ -226,9 +227,6 @@ public class MainPage extends AppCompatActivity {
       return super.onOptionsItemSelected(item);
   }
 
-  //C++ Declaration
-  public native String stringFromJNI();
-
-  //DRS 20160822c - Added 1
-  public native String validate(long matAddrGr, long matAddrRgba);
+  //C++ function declaration
+  public native String getData(Mat image);
 }
