@@ -25,9 +25,12 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Vector;
 
+import org.json.JSONObject;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
 
 public class MainPage extends AppCompatActivity {
 
@@ -37,18 +40,10 @@ public class MainPage extends AppCompatActivity {
   private int REQUEST_CAMERA = 0, SELECT_FILE = 1;
   private boolean camON = false, front = false ;
 
-  static {
-    System.loadLibrary("native-lib");
-    System.loadLibrary("opencv_java3");
-  }
-
   @Override
   protected void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
       setContentView(R.layout.main_page);
-
-
-
 
       cameraKitView = findViewById(R.id.camera);
       photoButton = findViewById(R.id.photoButton);
@@ -72,53 +67,33 @@ public class MainPage extends AppCompatActivity {
                               outputStream.write(photo);
                               outputStream.close();
 
-                            if (!OpenCVLoader.initDebug()) {
-
-                                AlertDialog.Builder builder1 = new AlertDialog.Builder(MainPage.this);
-                                builder1.setMessage("OpenCVLoader.initDebug(), not working.");
-                                builder1.setCancelable(true);
-
-                                builder1.setPositiveButton(
-                                        "OK",
-                                        new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                dialog.cancel();
-                                            }
-                                        });
-
-
-                                AlertDialog alert11 = builder1.create();
-                                alert11.show();
-                              //textView.setText(textView.getText() + "\n OpenCVLoader.initDebug(), not working.");
-                            } else {
-
-
-                                AlertDialog.Builder builder2 = new AlertDialog.Builder(MainPage.this);
-                                builder2.setMessage("OpenCVLoader.initDebug() working.");
-                                builder2.setCancelable(true);
-
-                                builder2.setPositiveButton(
-                                        "OK",
-                                        new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                dialog.cancel();
-                                            }
-                                        });
-
-
-                                AlertDialog alert2 = builder2.create();
-                                alert2.show();
-                              //textView.setText(textView.getText() + "\n OpenCVLoader.initDebug(), WORKING.");
-                              //DRS 20160822c Added 1
-                              //textView.setText(textView.getText() + "\n" + validate(0L, 0L));
-                            }
-
                               Toast.makeText(MainPage.this, "Saved " + savedPhoto, Toast.LENGTH_SHORT).show();
 
                           } catch (java.io.IOException e) {
                               e.printStackTrace();
                               Log.e("CKDemo", "Exception in photo callback");
                           }
+
+                          // Call Native c++  ------------------------------------------------------------------------------------------
+
+                          Mat image_; image_ = Imgcodecs.imread(savedPhoto.toString(), Imgcodecs.CV_LOAD_IMAGE_COLOR);
+
+                          AlertDialog.Builder builder2 = new AlertDialog.Builder(MainPage.this);
+                          String _buf = getList(image_).get(1).toString();
+                          builder2.setMessage(_buf);
+                          builder2.setCancelable(true);
+
+                          builder2.setPositiveButton(
+                              "OK",
+                              new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                  dialog.cancel();
+                                }
+                              });
+
+                          AlertDialog alert2 = builder2.create();
+                          alert2.show();
+                          // Call Native c++  ------------------------------------------------------------------------------------------
                       }
                   });
           }
@@ -227,6 +202,11 @@ public class MainPage extends AppCompatActivity {
       return super.onOptionsItemSelected(item);
   }
 
+  static {
+    System.loadLibrary("native-lib");
+    System.loadLibrary("opencv_java3");
+  }
+
   //C++ function declaration
-  public native String getData(Mat image);
+  public native Vector getList(Mat image);
 }

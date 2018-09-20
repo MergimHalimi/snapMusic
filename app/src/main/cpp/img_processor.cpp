@@ -22,6 +22,11 @@ void ImageProcessor::processor(cv::Mat image)
 std::vector<std::string> ImageProcessor::getData(void)
 {
   this->image_data_.push_back("TEST");
+  this->image_data_.push_back("LESH");
+  this->image_data_.push_back("2");
+  this->image_data_.push_back("3");
+  this->image_data_.push_back("4");
+
   return this->image_data_;
 }
 
