@@ -16,6 +16,20 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    externalNativeBuild {
+        cmake {
+            path '../img_proc/CMakeLists.txt'
+        }
+    }
+
+    defaultConfig {
+        externalNativeBuild {
+            cmake {
+                arguments "-DANDROID_TOOLCHAIN=gcc"
+                cppFlags "-DBUILD64BIT" , "-DCMAKE_GENERATOR_PLATFORM=x64"
+            }
+        }
+    }
 }
 
 dependencies {

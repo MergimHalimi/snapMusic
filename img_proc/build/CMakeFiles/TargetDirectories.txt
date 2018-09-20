@@ -1,0 +1,3 @@
+/home/jimmyhalimi/AndroidStudioProjects/snapMusic/img_proc/build/CMakeFiles/edit_cache.dir
+/home/jimmyhalimi/AndroidStudioProjects/snapMusic/img_proc/build/CMakeFiles/rebuild_cache.dir
+/home/jimmyhalimi/AndroidStudioProjects/snapMusic/img_proc/build/CMakeFiles/convert_to_orgb.dir

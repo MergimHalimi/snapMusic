@@ -10,4 +10,9 @@ public class MainPage extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_page);
     }
+
+    static {
+        System.loadLibrary("convert_to_orgb");
+    }
 }
+
