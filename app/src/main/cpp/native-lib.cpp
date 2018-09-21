@@ -2,7 +2,7 @@
 
 extern "C" {
 JNIEXPORT jobject JNICALL
-  Java_com_example_jimmyhalimi_snapmusic_MainPage_getList(JNIEnv *env , jclass, cv::Mat image) {
+  Java_com_example_jimmyhalimi_snapmusic_MainPage_getList(JNIEnv *env , jclass, long addrInputImage) {
 
     // Find Class for Vector ImageProcessor
     jclass clsVec = env->FindClass("java/util/Vector");
@@ -17,7 +17,13 @@ JNIEXPORT jobject JNICALL
     jmethodID vecAdd = env->GetMethodID(clsVec, "addElement", "(Ljava/lang/Object;)V");
 
     //Part to call the image processor class
+    cv::Mat* pInputImage = (cv::Mat*)addrInputImage;
+
     ImageProcessor image_;
+
+    image_.initialize(*pInputImage);
+
+    image_.runProccessor();
 
     std::vector<std::string> _buf = image_.getData();
 

@@ -13,7 +13,7 @@ extern "C" {
  */
 JNIEXPORT jobject JNICALL
   Java_com_example_jimmyhalimi_snapmusic_MainPage_getList
-      (JNIEnv *, jclass, cv::Mat image);
+      (JNIEnv *, jclass, long addrInputImage);
   }
 
 #endif //___CPLUSPLUS___

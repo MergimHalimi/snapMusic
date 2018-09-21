@@ -32,8 +32,8 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
 import org.opencv.imgcodecs.Imgcodecs;
 
-public class MainPage extends AppCompatActivity {
-
+public class MainPage extends AppCompatActivity
+{
   private CameraKitView cameraKitView;
   private Button photoButton, btnGallery, btnChange;
   private ImageView ivImage;
@@ -41,98 +41,113 @@ public class MainPage extends AppCompatActivity {
   private boolean camON = false, front = false ;
 
   @Override
-  protected void onCreate(Bundle savedInstanceState) {
-      super.onCreate(savedInstanceState);
-      setContentView(R.layout.main_page);
+  protected void onCreate(Bundle savedInstanceState)
+  {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.main_page);
 
-      cameraKitView = findViewById(R.id.camera);
-      photoButton = findViewById(R.id.photoButton);
-      ivImage = (ImageView) findViewById(R.id.ivImage);
-      photoButton.setOnClickListener(new View.OnClickListener() {
-          @Override
-          public void onClick(View v) {
+    cameraKitView = findViewById(R.id.camera);
+    photoButton = findViewById(R.id.photoButton);
+    ivImage = (ImageView) findViewById(R.id.ivImage);
+    photoButton.setOnClickListener(new View.OnClickListener()
+    {
+      @Override
+      public void onClick(View v) 
+      {
+        ivImage.setVisibility(View.INVISIBLE);
+        cameraKitView.setVisibility(View.VISIBLE);
+        btnChange.setEnabled(true);
+        if (camON)
+        {
+          cameraKitView.captureImage(new CameraKitView.ImageCallback()
+          {
+            @Override
+            public void onImage(CameraKitView cameraKitView, final byte[] photo)
+            {
+              // write the photo in device storage
+              File savedPhoto = new File(Environment.getExternalStorageDirectory(), System.currentTimeMillis() + ".jpg");
+              try 
+              {
+                FileOutputStream outputStream = new FileOutputStream(savedPhoto.getPath());
+                outputStream.write(photo);
+                outputStream.close();
 
-              ivImage.setVisibility(View.INVISIBLE);
-              cameraKitView.setVisibility(View.VISIBLE);
-              btnChange.setEnabled(true);
-              if (camON){
-                  cameraKitView.captureImage(new CameraKitView.ImageCallback() {
-                      @Override
-                      public void onImage(CameraKitView cameraKitView, final byte[] photo) {
+                Toast.makeText(MainPage.this, "Saved " + savedPhoto, Toast.LENGTH_SHORT).show();
+              } 
+              catch (java.io.IOException e) 
+              {
+                e.printStackTrace();
+                Log.e("CKDemo", "Exception in photo callback");
+              }
 
-                          // write the photo in device storage
-                          File savedPhoto = new File(Environment.getExternalStorageDirectory(), System.currentTimeMillis() + ".jpg");
-                          try {
-                              FileOutputStream outputStream = new FileOutputStream(savedPhoto.getPath());
-                              outputStream.write(photo);
-                              outputStream.close();
+              // Call Native c++  ------------------------------------------------------------------------------------------
 
-                              Toast.makeText(MainPage.this, "Saved " + savedPhoto, Toast.LENGTH_SHORT).show();
+              Mat image_ = Imgcodecs.imread(savedPhoto.toString(), Imgcodecs.CV_LOAD_IMAGE_COLOR);
 
-                          } catch (java.io.IOException e) {
-                              e.printStackTrace();
-                              Log.e("CKDemo", "Exception in photo callback");
-                          }
+              AlertDialog.Builder builder_ = new AlertDialog.Builder(MainPage.this);
 
-                          // Call Native c++  ------------------------------------------------------------------------------------------
+              String _buf = "";
+              Vector result_list_ = getList(image_.getNativeObjAddr());
 
-                          Mat image_; image_ = Imgcodecs.imread(savedPhoto.toString(), Imgcodecs.CV_LOAD_IMAGE_COLOR);
+              for (int i = 0; i < result_list_.size(); i++)
+              {
+                _buf = _buf + result_list_.get(i).toString() + ", \n";
+              }
 
-                          AlertDialog.Builder builder2 = new AlertDialog.Builder(MainPage.this);
-                          String _buf = getList(image_).get(1).toString();
-                          builder2.setMessage(_buf);
-                          builder2.setCancelable(true);
+             builder_.setMessage(_buf);
+             builder_.setCancelable(true);
+             builder_.setPositiveButton( "OK", 
+                                          new DialogInterface.OnClickListener() 
+                                          {
+                                            public void onClick(DialogInterface dialog, int id)
+                                            {
+                                              dialog.cancel();
+                                            }
+                                          });
 
-                          builder2.setPositiveButton(
-                              "OK",
-                              new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                  dialog.cancel();
-                                }
-                              });
+                AlertDialog alert2 =builder_.create();
+                alert2.show();
 
-                          AlertDialog alert2 = builder2.create();
-                          alert2.show();
-                          // Call Native c++  ------------------------------------------------------------------------------------------
-                      }
-                  });
-          }
-          camON = true;
-          }
-      });
+                // Call Native c++  ------------------------------------------------------------------------------------------
+            }
+          });
+        }
+        camON = true;
+      }
+    });
 
-      btnChange = (Button)findViewById(R.id.btnChange);
-      btnChange.setOnClickListener(new View.OnClickListener() {
-          @Override
-          public void onClick(View v) {
+    btnChange = (Button)findViewById(R.id.btnChange);
+    btnChange.setOnClickListener(new View.OnClickListener()
+    {
+      @Override
+      public void onClick(View v) {
+        if(front == false)
+        {
+          cameraKitView.setFacing(CameraKit.FACING_FRONT);
 
-                  if(front == false)
-                  {
-                      cameraKitView.setFacing(CameraKit.FACING_FRONT);
+          front = true;
+        }
+        else
+        {
+          cameraKitView.setFacing(CameraKit.FACING_BACK);
+          front = false;
+        }
+      }
+    });
 
-                      front = true;
-                  }
-                  else
-                  {
-                      cameraKitView.setFacing(CameraKit.FACING_BACK);
-                      front = false;
-                  }
+    btnGallery = (Button) findViewById(R.id.btnGallery);
+    btnGallery.setOnClickListener(new View.OnClickListener()
+    {
+      @Override
+      public void onClick(View v) {
 
-          }
-      });
-
-      btnGallery = (Button) findViewById(R.id.btnGallery);
-      btnGallery.setOnClickListener(new View.OnClickListener() {
-          @Override
-          public void onClick(View v) {
-
-              galleryIntent();
-              cameraKitView.setVisibility(View.INVISIBLE);
-              ivImage.setVisibility(View.VISIBLE);
-              camON = false;
-              btnChange.setEnabled(false);
-          }
-      });
+          galleryIntent();
+          cameraKitView.setVisibility(View.INVISIBLE);
+          ivImage.setVisibility(View.VISIBLE);
+          camON = false;
+          btnChange.setEnabled(false);
+      }
+    });
   }
 
   private void galleryIntent()
@@ -169,7 +184,6 @@ public class MainPage extends AppCompatActivity {
       // bm is the image from gallery
       ivImage.setImageBitmap(bm);
   }
-
 
   @Override
   protected void onResume() {
@@ -208,5 +222,5 @@ public class MainPage extends AppCompatActivity {
   }
 
   //C++ function declaration
-  public native Vector getList(Mat image);
+  public native Vector getList(long matAddr);
 }
