@@ -1,10 +1,8 @@
 #include "native-lib.h"
 
-//JNIEXPORT jstring JNICALL
-//Java_com_example_jimmyhalimi_snapmusic_MainActivity_getList(JNIEnv *javaEnvironment , jobject __unused obj, cv::Mat image)
-
+extern "C" {
 JNIEXPORT jobject JNICALL
-  Java_com_example_jimmyhalimi_snapmusic_MainActivity_getList(JNIEnv *env , jclass, cv::Mat image) {
+  Java_com_example_jimmyhalimi_snapmusic_MainPage_getList(JNIEnv *env , jclass, long addrInputImage) {
 
     // Find Class for Vector ImageProcessor
     jclass clsVec = env->FindClass("java/util/Vector");
@@ -19,12 +17,20 @@ JNIEXPORT jobject JNICALL
     jmethodID vecAdd = env->GetMethodID(clsVec, "addElement", "(Ljava/lang/Object;)V");
 
     //Part to call the image processor class
+    cv::Mat* pInputImage = (cv::Mat*)addrInputImage;
+
     ImageProcessor image_;
 
-    for (size_t i; i<image_.getData().size(); i++)
+    image_.initialize(*pInputImage);
+
+    image_.runProccessor();
+
+    std::vector<std::string> _buf = image_.getData();
+
+    for (size_t i=0; i<_buf.size(); i++)
     {
       // Add new string (created locally)
-      jstring retStr = env->NewStringUTF(image_.getData()[i].c_str());
+      jstring retStr = env->NewStringUTF(_buf[i].c_str());
       env->CallVoidMethod(objVec, vecAdd, retStr);
     }
     ///////////////////////////////////////////////
@@ -37,3 +43,4 @@ JNIEXPORT jobject JNICALL
 
     return objVec;
   }
+}

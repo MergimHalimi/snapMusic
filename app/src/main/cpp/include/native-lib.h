@@ -12,8 +12,8 @@ extern "C" {
  * Signature: (Ljava/lang/String;)Ljava/util/Vector;
  */
 JNIEXPORT jobject JNICALL
-  Java_com_example_jimmyhalimi_snapmusic_MainActivity_getList
-      (JNIEnv *, jclass, cv::Mat image);
+  Java_com_example_jimmyhalimi_snapmusic_MainPage_getList
+      (JNIEnv *, jclass, long addrInputImage);
   }
 
 #endif //___CPLUSPLUS___
