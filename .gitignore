@@ -9,3 +9,12 @@
 /build
 /captures
 .externalNativeBuild
+
+.project
+.settings/
+app/.classpath
+app/.project
+app/.settings/
+openCVLibrary343/.classpath
+openCVLibrary343/.project
+openCVLibrary343/.settings/

@@ -25,138 +25,129 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Vector;
 
+import org.json.JSONObject;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
 
-public class MainPage extends AppCompatActivity {
-
+public class MainPage extends AppCompatActivity
+{
   private CameraKitView cameraKitView;
   private Button photoButton, btnGallery, btnChange;
   private ImageView ivImage;
   private int REQUEST_CAMERA = 0, SELECT_FILE = 1;
   private boolean camON = false, front = false ;
 
-  static {
-    System.loadLibrary("native-lib");
-    System.loadLibrary("opencv_java3");
-  }
-
   @Override
-  protected void onCreate(Bundle savedInstanceState) {
-      super.onCreate(savedInstanceState);
-      setContentView(R.layout.main_page);
+  protected void onCreate(Bundle savedInstanceState)
+  {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.main_page);
 
+    cameraKitView = findViewById(R.id.camera);
+    photoButton = findViewById(R.id.photoButton);
+    ivImage = (ImageView) findViewById(R.id.ivImage);
+    photoButton.setOnClickListener(new View.OnClickListener()
+    {
+      @Override
+      public void onClick(View v) 
+      {
+        ivImage.setVisibility(View.INVISIBLE);
+        cameraKitView.setVisibility(View.VISIBLE);
+        btnChange.setEnabled(true);
+        if (camON)
+        {
+          cameraKitView.captureImage(new CameraKitView.ImageCallback()
+          {
+            @Override
+            public void onImage(CameraKitView cameraKitView, final byte[] photo)
+            {
+              // write the photo in device storage
+              File savedPhoto = new File(Environment.getExternalStorageDirectory(), System.currentTimeMillis() + ".jpg");
+              try 
+              {
+                FileOutputStream outputStream = new FileOutputStream(savedPhoto.getPath());
+                outputStream.write(photo);
+                outputStream.close();
 
+                Toast.makeText(MainPage.this, "Saved " + savedPhoto, Toast.LENGTH_SHORT).show();
+              } 
+              catch (java.io.IOException e) 
+              {
+                e.printStackTrace();
+                Log.e("CKDemo", "Exception in photo callback");
+              }
 
+              // Call Native c++  ------------------------------------------------------------------------------------------
 
-      cameraKitView = findViewById(R.id.camera);
-      photoButton = findViewById(R.id.photoButton);
-      ivImage = (ImageView) findViewById(R.id.ivImage);
-      photoButton.setOnClickListener(new View.OnClickListener() {
-          @Override
-          public void onClick(View v) {
+              Mat image_ = Imgcodecs.imread(savedPhoto.toString(), Imgcodecs.CV_LOAD_IMAGE_COLOR);
 
-              ivImage.setVisibility(View.INVISIBLE);
-              cameraKitView.setVisibility(View.VISIBLE);
-              btnChange.setEnabled(true);
-              if (camON){
-                  cameraKitView.captureImage(new CameraKitView.ImageCallback() {
-                      @Override
-                      public void onImage(CameraKitView cameraKitView, final byte[] photo) {
+              AlertDialog.Builder builder_ = new AlertDialog.Builder(MainPage.this);
 
-                          // write the photo in device storage
-                          File savedPhoto = new File(Environment.getExternalStorageDirectory(), System.currentTimeMillis() + ".jpg");
-                          try {
-                              FileOutputStream outputStream = new FileOutputStream(savedPhoto.getPath());
-                              outputStream.write(photo);
-                              outputStream.close();
+              String _buf = "";
+              Vector result_list_ = getList(image_.getNativeObjAddr());
 
-                            if (!OpenCVLoader.initDebug()) {
+              for (int i = 0; i < result_list_.size(); i++)
+              {
+                _buf = _buf + result_list_.get(i).toString() + ", \n";
+              }
 
-                                AlertDialog.Builder builder1 = new AlertDialog.Builder(MainPage.this);
-                                builder1.setMessage("OpenCVLoader.initDebug(), not working.");
-                                builder1.setCancelable(true);
-
-                                builder1.setPositiveButton(
-                                        "OK",
-                                        new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                dialog.cancel();
+             builder_.setMessage(_buf);
+             builder_.setCancelable(true);
+             builder_.setPositiveButton( "OK", 
+                                          new DialogInterface.OnClickListener() 
+                                          {
+                                            public void onClick(DialogInterface dialog, int id)
+                                            {
+                                              dialog.cancel();
                                             }
-                                        });
+                                          });
 
+                AlertDialog alert2 =builder_.create();
+                alert2.show();
 
-                                AlertDialog alert11 = builder1.create();
-                                alert11.show();
-                              //textView.setText(textView.getText() + "\n OpenCVLoader.initDebug(), not working.");
-                            } else {
+                // Call Native c++  ------------------------------------------------------------------------------------------
+            }
+          });
+        }
+        camON = true;
+      }
+    });
 
+    btnChange = (Button)findViewById(R.id.btnChange);
+    btnChange.setOnClickListener(new View.OnClickListener()
+    {
+      @Override
+      public void onClick(View v) {
+        if(front == false)
+        {
+          cameraKitView.setFacing(CameraKit.FACING_FRONT);
 
-                                AlertDialog.Builder builder2 = new AlertDialog.Builder(MainPage.this);
-                                builder2.setMessage("OpenCVLoader.initDebug() working.");
-                                builder2.setCancelable(true);
+          front = true;
+        }
+        else
+        {
+          cameraKitView.setFacing(CameraKit.FACING_BACK);
+          front = false;
+        }
+      }
+    });
 
-                                builder2.setPositiveButton(
-                                        "OK",
-                                        new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                dialog.cancel();
-                                            }
-                                        });
+    btnGallery = (Button) findViewById(R.id.btnGallery);
+    btnGallery.setOnClickListener(new View.OnClickListener()
+    {
+      @Override
+      public void onClick(View v) {
 
-
-                                AlertDialog alert2 = builder2.create();
-                                alert2.show();
-                              //textView.setText(textView.getText() + "\n OpenCVLoader.initDebug(), WORKING.");
-                              //DRS 20160822c Added 1
-                              //textView.setText(textView.getText() + "\n" + validate(0L, 0L));
-                            }
-
-                              Toast.makeText(MainPage.this, "Saved " + savedPhoto, Toast.LENGTH_SHORT).show();
-
-                          } catch (java.io.IOException e) {
-                              e.printStackTrace();
-                              Log.e("CKDemo", "Exception in photo callback");
-                          }
-                      }
-                  });
-          }
-          camON = true;
-          }
-      });
-
-      btnChange = (Button)findViewById(R.id.btnChange);
-      btnChange.setOnClickListener(new View.OnClickListener() {
-          @Override
-          public void onClick(View v) {
-
-                  if(front == false)
-                  {
-                      cameraKitView.setFacing(CameraKit.FACING_FRONT);
-
-                      front = true;
-                  }
-                  else
-                  {
-                      cameraKitView.setFacing(CameraKit.FACING_BACK);
-                      front = false;
-                  }
-
-          }
-      });
-
-      btnGallery = (Button) findViewById(R.id.btnGallery);
-      btnGallery.setOnClickListener(new View.OnClickListener() {
-          @Override
-          public void onClick(View v) {
-
-              galleryIntent();
-              cameraKitView.setVisibility(View.INVISIBLE);
-              ivImage.setVisibility(View.VISIBLE);
-              camON = false;
-              btnChange.setEnabled(false);
-          }
-      });
+          galleryIntent();
+          cameraKitView.setVisibility(View.INVISIBLE);
+          ivImage.setVisibility(View.VISIBLE);
+          camON = false;
+          btnChange.setEnabled(false);
+      }
+    });
   }
 
   private void galleryIntent()
@@ -194,7 +185,6 @@ public class MainPage extends AppCompatActivity {
       ivImage.setImageBitmap(bm);
   }
 
-
   @Override
   protected void onResume() {
       super.onResume();
@@ -226,9 +216,11 @@ public class MainPage extends AppCompatActivity {
       return super.onOptionsItemSelected(item);
   }
 
-  //C++ Declaration
-  public native String stringFromJNI();
+  static {
+    System.loadLibrary("native-lib");
+    System.loadLibrary("opencv_java3");
+  }
 
-  //DRS 20160822c - Added 1
-  public native String validate(long matAddrGr, long matAddrRgba);
+  //C++ function declaration
+  public native Vector getList(long matAddr);
 }

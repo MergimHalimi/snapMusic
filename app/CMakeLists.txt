@@ -5,6 +5,7 @@
 #Added 2 path definitions to support 20160825 additions
 set(pathToProject ~/AndroidStudioProjects/snapMusic)
 set(pathToOpenCv ~/Downloads/OpenCV-android-sdk)
+set(pathToCpp ~/AndroidStudioProjects/snapMusic/app/src/main/cpp)
 
 #Added by the IDE on project create
 cmake_minimum_required(VERSION 3.4.1)
@@ -14,10 +15,17 @@ set(CMAKE_VERBOSE_MAKEFILE on)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
 
 #Addition suggested by Bruno Alexandre Krinski 20160825
-include_directories(${pathToOpenCv}/sdk/native/jni/include)
+include_directories(
+  ${pathToOpenCv}/sdk/native/jni/include
+  ${pathToCpp}/include
+)
 
 #Added by IDE on project create
-add_library( native-lib SHARED src/main/cpp/native-lib.cpp )
+add_library( native-lib
+  SHARED
+  src/main/cpp/native-lib.cpp
+  src/main/cpp/img_processor.cpp
+)
 
 #Addition suggested by Bruno Alexandre Krinski 20160825
 add_library( lib_opencv SHARED IMPORTED )
