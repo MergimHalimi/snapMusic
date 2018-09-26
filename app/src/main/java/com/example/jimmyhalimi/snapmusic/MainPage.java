@@ -45,9 +45,9 @@ public class MainPage extends AppCompatActivity
   private Button photoButton, btnGallery, btnChange, btnFlash;
   private ImageView ivImage;
   private int SELECT_FILE = 1;
-  private static final String TAG = "SearchActivity";
+  private static final String TAG = "MainPage";
   private static final int REQUEST_CODE = 1;
-  private boolean camON = false, front = false, flashOn = false ;
+  private boolean camON = true, front = false, flashOn = false ;
 
   @Override
   protected void onCreate(Bundle savedInstanceState)
