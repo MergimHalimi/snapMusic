@@ -19,7 +19,7 @@
         android:layout_height="wrap_content"
         android:background="@android:color/transparent"
         android:layout_alignParentBottom="true"
-        android:drawableTop="@drawable/camera"
+        android:drawableTop="@drawable/ic_camera"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="20dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -35,7 +35,20 @@
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="20dp"
         android:layout_marginRight="10dp"
-        android:drawableTop="@drawable/gallery"
+        android:drawableTop="@drawable/ic_gallery"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        />
+
+    <android.support.v7.widget.AppCompatButton
+        android:id="@+id/btnFlash"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="40dp"
+        android:layout_marginLeft="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         />
@@ -45,7 +58,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@android:color/transparent"
-        android:drawableTop="@drawable/rotate"
+        android:drawableTop="@drawable/ic_switch_camera"
         android:layout_alignParentRight="true"
         android:layout_marginTop="20dp"
         />
@@ -56,6 +69,8 @@
         android:gravity="center"
         android:orientation="vertical"
         android:padding="10dp" >
+
+
 
         <ImageView
             android:id="@+id/ivImage"
