@@ -160,6 +160,7 @@ public class MainPage extends AppCompatActivity
       @Override
       public void onClick(View v) {
 
+          ivImage.setImageBitmap(null);
           galleryIntent();
           cameraKitView.setVisibility(View.INVISIBLE);
           ivImage.setVisibility(View.VISIBLE);
@@ -172,7 +173,7 @@ public class MainPage extends AppCompatActivity
 
 
     btnFlash = (Button)findViewById(R.id.btnFlash);
-    btnFlash.setBackgroundResource(R.drawable.flashnot);
+    btnFlash.setBackgroundResource(R.drawable.ic_flash_off);
     btnFlash.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -182,14 +183,14 @@ public class MainPage extends AppCompatActivity
               cameraKitView.setFlash(CameraKit.FLASH_ON);
               flashOn = true;
 
-              btnFlash.setBackgroundResource(R.drawable.flash);
+              btnFlash.setBackgroundResource(R.drawable.ic_flash_on);
             }
             else
             {
                 cameraKitView.setFlash(CameraKit.FLASH_OFF);
                 flashOn = false;
 
-                btnFlash.setBackgroundResource(R.drawable.flashnot);
+                btnFlash.setBackgroundResource(R.drawable.ic_flash_off);
             }
         }
     });
