@@ -55,11 +55,7 @@ std::vector<std::string> ImageProcessor::getData(void)
   }
   else
   {
-    //this->image_data_.clear();
-    //this->image_data_.push_back("Chair");
-    //this->image_data_.push_back("Car");
-    //this->image_data_.push_back("Laptop");
-
+    //
   }
 
   return this->image_data_;
@@ -79,8 +75,7 @@ void ImageProcessor::processor(cv::Mat& image)
 
   this->loadImage(image);
 
-  //Process frame
-
+  this->filterWithConfidence(this->detections_);
 }
 
 bool ImageProcessor::initYOLOParams(void)
@@ -119,78 +114,45 @@ bool ImageProcessor::loadYOLOModel(void)
 
 bool ImageProcessor::loadImage(cv::Mat& image)
 {
-  cv::Mat blob;
+  cv::Mat blob_;
+
   // Create a 4D blob from a frame.
-  blob = cv::dnn::blobFromImage(image, 1/255.0, cv::Size(this->input_width_, this->input_height_), cv::Scalar(0,0,0), true, false);
+  cv::dnn::blobFromImage(image, blob_, 1/255.0, cv::Size(this->input_width_, this->input_height_), cv::Scalar(0,0,0), true, false);
 
   //Sets the input to the network
-  this->net_.setInput(blob);
+  this->net_.setInput(blob_);
 
-  this->detections = this->net_.forward();
-
-  this->filterWithConfidence();
+  this->detections_ = this->net_.forward();
 
   return true;
 }
 
-bool ImageProcessor::filterWithConfidence()
+bool ImageProcessor::filterWithConfidence(cv::Mat detections)
 {
   this->image_data_.clear();
 
-  for (int i = 0; i < this->detections.rows; i++)
+  for (int i = 0; i < detections.rows; i++)
   {
-    const int probability_index = 5;
-    const int probability_size = this->detections.cols - probability_index;
-    double *prob_array_ptr = &this->detections.at<double>(i, probability_index);
+    const int probability_index_ = 5;
+    const int probability_size_ = detections.cols - probability_index_;
 
-    size_t objectClass = std::max_element(prob_array_ptr, prob_array_ptr + probability_size) - prob_array_ptr;
+    float *prob_array_ptr_ = &detections.at<float>(i, probability_index_);
 
-    float confidence = this->detections.at<float>(i, (int) objectClass + probability_index);
+    size_t objectClass = std::max_element(prob_array_ptr_, prob_array_ptr_ + probability_size_) - prob_array_ptr_;
 
-    if (confidence >= this->conf_threshold_)
+    float confidence_ = detections.at<float>(i, static_cast<int>(objectClass) + probability_index_);
+
+    if (confidence_ >= this->conf_threshold_)
     {
-      std::string className = objectClass < classes_.size() ?
+      std::string class_name_ = objectClass < classes_.size() ?
                               classes_[objectClass] :
                               "CLASSES::UNCLASSIFIED";
 
+      std::string filtered_result_ = "Class: " + class_name_ + ", Confidence: " + std::to_string(confidence_);
 
-      std::string _buff = "Class: " + className + ", Confidence: " + std::to_string(confidence);
-
-      this->image_data_.push_back(_buff);
+      this->image_data_.push_back(filtered_result_);
     }
   }
 
   return true;
-}
-
-std::vector<cv::String> ImageProcessor::writeOutputsNames(const cv::dnn::Net& net)
-{
-  static std::vector<cv::String> names_;
-
-  this->image_data_.clear();
-  names_.clear();
-
-  this->image_data_.push_back("From img_processor : ");
-
-  //Get the indices of the output layers, i.e. the layers with unconnected outputs
-  std::vector<int> outLayers = net.getUnconnectedOutLayers();
-
-  //get the names of all the layers in the network
-  std::vector<cv::String> layers_names_ = net.getLayerNames();
-
-  // Get the names of the output layers in names
-  names_.resize(outLayers.size());
-
-  for (size_t i = 0; i < outLayers.size(); ++i)
-  {
-    this->image_data_.push_back(layers_names_[outLayers[i] - 1]);
-    names_[i] = layers_names_[outLayers[i] - 1];
-  }
-
-  if (names_.empty())
-  {
-    this->image_data_.push_back("No objects detected");
-  }
-
-  return names_;
 }

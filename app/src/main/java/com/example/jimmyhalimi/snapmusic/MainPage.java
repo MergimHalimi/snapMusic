@@ -362,8 +362,8 @@ public class MainPage extends Activity
 
       if (item.getItemId()==R.id.Settings)
       {
-          Intent objS = new Intent(MainPage.this,Settings.class);
-          startActivity(objS);
+          //Intent objS = new Intent(MainPage.this,Settings.class);
+          //startActivity(objS);
       }
       return super.onOptionsItemSelected(item);
   }

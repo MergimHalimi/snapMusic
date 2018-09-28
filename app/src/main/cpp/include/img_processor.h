@@ -7,14 +7,10 @@
 #include <vector>
 
 //OpenCV
-#include <opencv2/core.hpp>
+#include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/dnn.hpp>
-#include <opencv2/dnn/shape_utils.hpp>
-
-#include <opencv2/opencv.hpp>
-#include <opencv2/core/utils/trace.hpp>
 
 /**
  * \brief This class holds the functionality to get the image, process it, and return a vector of strings as a result of the objects recognised
@@ -64,6 +60,7 @@ public:
    * \brief ImageProcessor Class Destructor
    */
   ~ImageProcessor(void);
+
 private:
   /**
    * \brief ImageProcessor Class Destructor
@@ -88,12 +85,7 @@ private:
   /**
   * \brief ImageProcessor Class function filterWithConfidence, the final process of image recognition and result writing (Remove results with low confidence)
   */
-  bool filterWithConfidence();
-
-  /**
-  * \brief ImageProcessor Class function loadYOLOModel, to load the pretrained weights and model, and classes for image recognition.
-  */
-  std::vector<cv::String> writeOutputsNames(const cv::dnn::Net& net);
+  bool filterWithConfidence(cv::Mat detections);
 
   /**
    * \param image_ : cv::Mat - The variable to store the input image
@@ -109,7 +101,7 @@ private:
    * \param model_weights_ : std::string -
    * \param classes_ : std::vector<std::string> -
    * \param net_ : cv::dnn::Net -
-   * \param input_height_ : int -
+   * \param detections_ : cv::Mat -
    * \param input_height_ : int -
    * \param input_height_ : int -
    * \param input_height_ : int -
@@ -130,6 +122,6 @@ private:
              model_weights_;
   std::vector<std::string> classes_;
   cv::dnn::Net net_;
-  cv::Mat detections;
+  cv::Mat detections_;
 };
 #endif //___IMAGE_PROCESSOR___
