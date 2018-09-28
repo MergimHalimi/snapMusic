@@ -3,18 +3,26 @@ package com.example.jimmyhalimi.snapmusic;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+
+import android.app.FragmentTransaction;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.Camera;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.app.Fragment;
+import android.app.FragmentManager;
+
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.os.Bundle;
 
 import com.camerakit.CameraKit;
@@ -24,8 +32,11 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ListView;
+
 import android.widget.Toast;
 
 import java.io.File;
@@ -33,12 +44,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Vector;
 
-import org.json.JSONObject;
+
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
 import org.opencv.imgcodecs.Imgcodecs;
 
-public class MainPage extends AppCompatActivity
+public class MainPage extends Activity
 {
 
   private CameraKitView cameraKitView;
@@ -49,6 +60,13 @@ public class MainPage extends AppCompatActivity
   private static final int REQUEST_CODE = 1;
   private boolean camON = true, front = false, flashOn = false ;
 
+
+
+    String[] listArray;
+    ListView drawerListView;
+    ActionBarDrawerToggle mActionBarDrawerToggle;
+    DrawerLayout mDrawerLayout;
+
   @Override
   protected void onCreate(Bundle savedInstanceState)
   {
@@ -57,7 +75,55 @@ public class MainPage extends AppCompatActivity
 
     verifyPermissions();
 
-    cameraKitView = findViewById(R.id.camera);
+
+
+      listArray = getResources().getStringArray(R.array.listArray);
+      drawerListView = (ListView)findViewById(R.id.drawerLayoutListId);
+      mDrawerLayout = (DrawerLayout) findViewById(R.id.drawerLayoutId);
+
+      drawerListView.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_activated_1, listArray));
+
+      //Create Drawer Toggle
+      mActionBarDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.open_drawer, R.string.close_drawer){
+          @Override
+          public void onDrawerOpened(View drawerView) {
+              super.onDrawerOpened(drawerView);
+          }
+
+          @Override
+          public void onDrawerClosed(View drawerView) {
+              super.onDrawerClosed(drawerView);
+          }
+      };
+      mDrawerLayout.setDrawerListener(mActionBarDrawerToggle);
+
+      //Enable the drawer to open and close
+      getActionBar().setDisplayHomeAsUpEnabled(true);
+      getActionBar().setHomeButtonEnabled(true);
+
+      FragmentTransaction ft = getFragmentManager().beginTransaction();
+      TopFragment tf = new TopFragment();
+      //Changed to add Fragment Name
+      //ft.replace(R.id.frameLayoutId, tf);
+      ft.replace(R.id.frameLayoutId, tf, "visible_fragment");
+      ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+      ft.addToBackStack(null);
+      ft.commit();
+
+      //Add a backStack Listener
+
+      getFragmentManager().addOnBackStackChangedListener(new FragmentManager.OnBackStackChangedListener() {
+          @Override
+          public void onBackStackChanged() {
+              Fragment currentBackStackFragment = getFragmentManager().findFragmentByTag("visible_fragment");
+              if(currentBackStackFragment instanceof TopFragment){
+                  //Add Code
+              }
+          }
+      });
+
+
+      cameraKitView = findViewById(R.id.camera);
     photoButton = findViewById(R.id.photoButton);
     ivImage = (ImageView) findViewById(R.id.ivImage);
     photoButton.setOnClickListener(new View.OnClickListener()
@@ -78,11 +144,11 @@ public class MainPage extends AppCompatActivity
             public void onImage(CameraKitView cameraKitView, final byte[] photo)
             {
               // write the photo in device storage
-              File savedPhoto = new File(Environment.getExternalStorageDirectory(), System.currentTimeMillis() + ".jpg");
+              File savedPhoto = new File(Environment.getExternalStoragePublicDirectory(   Environment.DIRECTORY_DCIM),System.currentTimeMillis() + ".jpg");
 
               try
               {
-                FileOutputStream outputStream = new FileOutputStream(savedPhoto.getPath());
+                FileOutputStream outputStream = new FileOutputStream(savedPhoto.getAbsolutePath());
                 outputStream.write(photo);
                 outputStream.close();
 
@@ -257,7 +323,7 @@ public class MainPage extends AppCompatActivity
 
 
 
-  private void verifyPermissions(){
+  public void verifyPermissions(){
         Log.d(TAG, "verifyPermissions: asking user for permissions");
         String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -267,8 +333,7 @@ public class MainPage extends AppCompatActivity
                 permissions[0]) == PackageManager.PERMISSION_GRANTED
                 && ContextCompat.checkSelfPermission(this.getApplicationContext(),
                 permissions[1]) == PackageManager.PERMISSION_GRANTED
-                && ContextCompat.checkSelfPermission(this.getApplicationContext(),
-                permissions[2]) == PackageManager.PERMISSION_GRANTED){
+               ){
 
         }else{
             ActivityCompat.requestPermissions(MainPage.this,
@@ -276,6 +341,8 @@ public class MainPage extends AppCompatActivity
                     REQUEST_CODE);
         }
     }
+
+
 
 
   @Override
@@ -287,8 +354,31 @@ public class MainPage extends AppCompatActivity
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
 
+
+
+      if(mActionBarDrawerToggle.onOptionsItemSelected(item)){
+          return true;
+      }
+
+      if (item.getItemId()==R.id.Settings)
+      {
+          Intent objS = new Intent(MainPage.this,Settings.class);
+          startActivity(objS);
+      }
       return super.onOptionsItemSelected(item);
   }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        mActionBarDrawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig){
+        super.onConfigurationChanged(newConfig);
+        mActionBarDrawerToggle.onConfigurationChanged(newConfig);
+    }
 
   static {
     System.loadLibrary("native-lib");
