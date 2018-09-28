@@ -11,6 +11,17 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/dnn.hpp>
+#include <fcntl.h>
+
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <string>
+
+// for check:
+#include <algorithm>
+#include <iterator>
+#include <iostream>
 
 /**
  * \brief This class holds the functionality to get the image, process it, and return a vector of strings as a result of the objects recognised
@@ -86,6 +97,8 @@ private:
   * \brief ImageProcessor Class function filterWithConfidence, the final process of image recognition and result writing (Remove results with low confidence)
   */
   bool filterWithConfidence(cv::Mat detections);
+
+  std::vector<unsigned char> toUCHARvec(std::string path);
 
   /**
    * \param image_ : cv::Mat - The variable to store the input image

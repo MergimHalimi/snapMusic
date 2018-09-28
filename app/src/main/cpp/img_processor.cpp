@@ -91,7 +91,7 @@ bool ImageProcessor::initYOLOParams(void)
 bool ImageProcessor::loadYOLOModel(void)
 {
   // Load names of classes
-  this->classes_file_ = "/storage/emulated/0/datasets/coco.names";
+  this->classes_file_ = "datasets/coco.h";
   std::ifstream ifs(classes_file_.c_str());
   std::string line;
 
@@ -101,11 +101,16 @@ bool ImageProcessor::loadYOLOModel(void)
   }
 
   //Give the configuration and weight files for the model
-  this->model_configuration_ = "/storage/emulated/0/datasets/yolov3.cfg";
-  this->model_weights_ = "/storage/emulated/0/datasets/yolov3.weights";
+  this->model_configuration_ = "datasets/yolov3cfg.h";
+  this->model_weights_ = "datasets/yolov3.h";
+
+  std::vector<unsigned char> model_configuration_vec_ = this->toUCHARvec(this->model_configuration_);
+  std::vector<unsigned char> model_weights_vec_ = this->toUCHARvec(this->model_weights_);
 
   //Load the network
-  this->net_ = cv::dnn::readNetFromDarknet(this->model_configuration_, this->model_weights_);
+  this->net_ = cv::dnn::readNetFromDarknet(model_configuration_, model_weights_);
+
+
   this->net_.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV);
   this->net_.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
 
@@ -155,4 +160,28 @@ bool ImageProcessor::filterWithConfidence(cv::Mat detections)
   }
 
   return true;
+}
+
+std::vector<unsigned char> ImageProcessor::toUCHARvec(std::string path)
+{
+  std::vector<unsigned char> vec;  // Would like this to be std::vector<unsigned char> vec;
+  std::ifstream file_;
+  file_.exceptions( std::ifstream::badbit
+                    | std::ifstream::failbit
+                    | std::ifstream::eofbit);
+
+  file_.open(path);
+
+  file_.seekg(0, std::ios::end);
+
+  std::streampos length(file_.tellg());
+
+  if (length)
+  {
+    file_.seekg(0, std::ios::beg);
+    vec.resize(static_cast<std::size_t>(length));
+    file_.read(reinterpret_cast<char*>(&vec.front()), static_cast<std::size_t>(length));
+  }
+
+  return vec;
 }
