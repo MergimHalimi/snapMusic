@@ -98,8 +98,6 @@ private:
   */
   bool filterWithConfidence(cv::Mat detections);
 
-  std::vector<unsigned char> toUCHARvec(std::string path);
-
   /**
    * \param image_ : cv::Mat - The variable to store the input image
    * \param image_data_ : std::vector<std::string> - The variable to store the output result as vector of strings
