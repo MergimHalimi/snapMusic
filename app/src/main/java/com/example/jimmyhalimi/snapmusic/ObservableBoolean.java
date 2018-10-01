@@ -17,8 +17,7 @@ public class ObservableBoolean
 
   private boolean is_processing_;
 
-  public void triggerBooleanListener(boolean is_processing_)
-  {
+  public void triggerBooleanListener(boolean is_processing_) {
     this.is_processing_ = is_processing_;
 
     if(listener != null)

@@ -60,7 +60,7 @@ public class MainPage extends Activity
   private int SELECT_FILE = 1;
   private static final String TAG = "MainPage";
   private static final int REQUEST_CODE = 1;
-  private boolean camON = true, front = false, flashOn = false, processing_ = false;
+  private boolean camON = true, front = false, flashOn = false;
   private String image_path_;
   private ProgressBar spinner;
   private ObservableBoolean is_processing_ = new ObservableBoolean();
@@ -171,7 +171,7 @@ public class MainPage extends Activity
         }
         camON = true;
         setFlags(true);
-        }
+      }
     });
 
 
@@ -240,12 +240,11 @@ public class MainPage extends Activity
     //setFlags(processing_);
 
     spinner = (ProgressBar) findViewById(R.id.progress_bar_);
+
     is_processing_.setOnBooleanChangeListener(new ObservableBoolean.OnBooleanChangeListener()
     {
       @Override
-      public void onBooleanChanged(boolean newValue)
-      {
-        ImageProcessingThread img_procc_ = new ImageProcessingThread(image_path_);
+      public void onBooleanChanged(boolean newValue) {
 
         if (newValue == false)
         {
@@ -261,7 +260,19 @@ public class MainPage extends Activity
           cameraKitView.onPause();
           if(image_path_ != null)
           {
+            ImageProcessingThread img_procc_ = new ImageProcessingThread(image_path_);
             img_procc_.start();
+            try
+            {
+              img_procc_.join();
+
+            }
+            catch (InterruptedException e)
+            {
+              e.printStackTrace();
+            }
+            threadFinished(img_procc_.getBuff());
+
           }
           //onPause();
         }
@@ -423,21 +434,32 @@ public class MainPage extends Activity
 //      }
 //    }
 
-    public void setFlags(boolean flag_)
-    {
-      processing_ = flag_;
+    public void setFlags(boolean flag_) {
       is_processing_.triggerBooleanListener(flag_);
     }
 
+public void threadFinished(String _buf)
+{
+  AlertDialog.Builder builder_ = new AlertDialog.Builder(MainPage.this);
 
+  builder_.setMessage(_buf);
+  builder_.setCancelable(true);
+  builder_.setPositiveButton("OK",
+
+    new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface dialog, int id)
+      {
+        dialog.cancel();
+        setFlags(false);
+      }
+    });
+
+  AlertDialog alert2 = builder_.create();
+  alert2.show();
+}
 
   public static MainPage getActivity() {
     return main_instace_;
-  }
-
-  static {
-    System.loadLibrary("native-lib");
-    System.loadLibrary("opencv_java3");
   }
 
 //  //C++ function declaration

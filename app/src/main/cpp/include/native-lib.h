@@ -12,7 +12,7 @@ extern "C" {
  * Signature: (Ljava/lang/String;)Ljava/util/Vector;
  */
 JNIEXPORT jobject JNICALL
-  Java_com_example_jimmyhalimi_snapmusic_MainPage_getList
+  Java_com_example_jimmyhalimi_snapmusic_ImageProcessingThread_getList
       (JNIEnv *, jclass, long addrInputImage);
   }
 

@@ -10,17 +10,22 @@ import org.opencv.imgcodecs.Imgcodecs;
 
 import java.util.Vector;
 
-import com.example.jimmyhalimi.snapmusic.MainPage;
+
 
 class ImageProcessingThread extends Thread {
 
+//  public interface ThreadCompleteListener {
+//    void notifyOfThreadComplete(final Thread thread);
+//  }
+
   private String  path;
+  private String _buf;
   ImageProcessingThread(String path) {
     this.path = path;
   }
 
   public void run() {
-    loadImageInImageProcessor(path);
+    this.loadImageInImageProcessor(path);
   }
 
   private void loadImageInImageProcessor(String path)
@@ -29,30 +34,28 @@ class ImageProcessingThread extends Thread {
 
       Mat image_ = Imgcodecs.imread(path, Imgcodecs.CV_LOAD_IMAGE_COLOR);
 
-      String _buf = "Path: " + path + "\nResults: \n";
+      _buf = "Path: " + path + "\nResults: \n";
       Vector result_list_ = getList(image_.getNativeObjAddr());
 
       for (int i = 0; i < result_list_.size(); i++) {
         _buf = _buf + result_list_.get(i).toString() + ", \n";
       }
 
-      // Call Native c++  ------------------------------------------------------------------------------------------
+      //MainPage.getActivity().threadFinished(_buf);
+  }
 
-      AlertDialog.Builder builder_ = new AlertDialog.Builder(MainPage.getActivity());
+  public String getBuff()
+  {
+    return _buf;
+  }
 
-      builder_.setMessage(_buf);
-      builder_.setCancelable(true);
-      builder_.setPositiveButton("OK",
+//  public final void addListener(final ThreadCompleteListener listener) {
+//    listeners.add(listener);
+//  }
 
-        new DialogInterface.OnClickListener() {
-          public void onClick(DialogInterface dialog, int id) {
-            dialog.cancel();
-            MainPage.getActivity().setFlags(false);
-          }
-        });
-
-      AlertDialog alert2 = builder_.create();
-      alert2.show();
+  static {
+    System.loadLibrary("native-lib");
+    System.loadLibrary("opencv_java3");
   }
 
   //C++ function declaration
