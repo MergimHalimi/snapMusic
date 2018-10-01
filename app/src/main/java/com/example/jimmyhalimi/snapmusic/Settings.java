@@ -22,12 +22,6 @@ public class Settings extends AppCompatActivity {
         swCamera = (Switch)findViewById(R.id.swCamera);
         swStorage = (Switch)findViewById(R.id.swStorage);
 
-        swCamera.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-                    verifyPermissions();
-            }
-        });
 
 
     }

@@ -1,24 +1,25 @@
 package com.example.jimmyhalimi.snapmusic;
 
 import android.Manifest;
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 
-import android.app.FragmentTransaction;
+
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.graphics.Camera;
+
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
-import android.app.Fragment;
-import android.app.FragmentManager;
+
 
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -28,6 +29,8 @@ import android.os.Bundle;
 import com.camerakit.CameraKit;
 import com.camerakit.CameraKitView;
 
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -49,7 +52,8 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
 import org.opencv.imgcodecs.Imgcodecs;
 
-public class MainPage extends Activity
+public class MainPage extends AppCompatActivity
+        implements NavigationView.OnNavigationItemSelectedListener
 {
 
   private CameraKitView cameraKitView;
@@ -75,8 +79,20 @@ public class MainPage extends Activity
 
     verifyPermissions();
 
+      Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+      setSupportActionBar(toolbar);
+
+      DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+      ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+              this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+      drawer.addDrawerListener(toggle);
+      toggle.syncState();
+
+      NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+      navigationView.setNavigationItemSelectedListener(this);
 
 
+/*
       listArray = getResources().getStringArray(R.array.listArray);
       drawerListView = (ListView)findViewById(R.id.drawerLayoutListId);
       mDrawerLayout = (DrawerLayout) findViewById(R.id.drawerLayoutId);
@@ -94,36 +110,18 @@ public class MainPage extends Activity
           public void onDrawerClosed(View drawerView) {
               super.onDrawerClosed(drawerView);
           }
-      };
-      mDrawerLayout.setDrawerListener(mActionBarDrawerToggle);
+      }; */
+
+//     mDrawerLayout.setDrawerListener(mActionBarDrawerToggle);
 
       //Enable the drawer to open and close
-      getActionBar().setDisplayHomeAsUpEnabled(true);
-      getActionBar().setHomeButtonEnabled(true);
 
-      FragmentTransaction ft = getFragmentManager().beginTransaction();
-      TopFragment tf = new TopFragment();
-      //Changed to add Fragment Name
-      //ft.replace(R.id.frameLayoutId, tf);
-      ft.replace(R.id.frameLayoutId, tf, "visible_fragment");
-      ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
-      ft.addToBackStack(null);
-      ft.commit();
+     // getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
+      getSupportActionBar().setCustomView(R.layout.abs_layout);
+      getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+      getSupportActionBar().setHomeButtonEnabled(true);
 
-      //Add a backStack Listener
-
-      getFragmentManager().addOnBackStackChangedListener(new FragmentManager.OnBackStackChangedListener() {
-          @Override
-          public void onBackStackChanged() {
-              Fragment currentBackStackFragment = getFragmentManager().findFragmentByTag("visible_fragment");
-              if(currentBackStackFragment instanceof TopFragment){
-                  //Add Code
-              }
-          }
-      });
-
-
-      cameraKitView = findViewById(R.id.camera);
+    cameraKitView = findViewById(R.id.camera);
     photoButton = findViewById(R.id.photoButton);
     ivImage = (ImageView) findViewById(R.id.ivImage);
     photoButton.setOnClickListener(new View.OnClickListener()
@@ -140,12 +138,13 @@ public class MainPage extends Activity
           cameraKitView.captureImage(new CameraKitView.ImageCallback()
           {
 
+
             @Override
-            public void onImage(CameraKitView cameraKitView, final byte[] photo)
+            public void onImage(final CameraKitView cameraKitView, final byte[] photo)
             {
               // write the photo in device storage
               File savedPhoto = new File(Environment.getExternalStoragePublicDirectory(   Environment.DIRECTORY_DCIM),System.currentTimeMillis() + ".jpg");
-
+             // cameraKitView.onPause();
               try
               {
                 FileOutputStream outputStream = new FileOutputStream(savedPhoto.getAbsolutePath());
@@ -164,8 +163,9 @@ public class MainPage extends Activity
               }
 
               // Call Native c++  ------------------------------------------------------------------------------------------
-
-              Mat image_ = Imgcodecs.imread(savedPhoto.toString(), Imgcodecs.CV_LOAD_IMAGE_COLOR);
+                Intent objI = new Intent(MainPage.this, Settings.class);
+                startActivity(objI);
+             /* Mat image_ = Imgcodecs.imread(savedPhoto.toString(), Imgcodecs.CV_LOAD_IMAGE_COLOR);
 
               AlertDialog.Builder builder_ = new AlertDialog.Builder(MainPage.this);
 
@@ -184,12 +184,14 @@ public class MainPage extends Activity
                                           {
                                             public void onClick(DialogInterface dialog, int id)
                                             {
-                                              dialog.cancel();
+
+
+
                                             }
                                           });
 
                 AlertDialog alert2 =builder_.create();
-                alert2.show();
+                alert2.show();   */
 
                 // Call Native c++  ------------------------------------------------------------------------------------------
             }
@@ -356,9 +358,6 @@ public class MainPage extends Activity
 
 
 
-      if(mActionBarDrawerToggle.onOptionsItemSelected(item)){
-          return true;
-      }
 
       if (item.getItemId()==R.id.Settings)
       {
@@ -367,6 +366,29 @@ public class MainPage extends Activity
       }
       return super.onOptionsItemSelected(item);
   }
+
+    @SuppressWarnings("StatementWithEmptyBody")
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+        // Handle navigation view item clicks here.
+        int id = item.getItemId();
+
+        if (id == R.id.nav_home) {
+
+        } else if (id == R.id.nav_gallery) {
+
+       } else if (id == R.id.nav_settings) {
+            Intent objS1 = new Intent(MainPage.this,Settings.class);
+            startActivity(objS1);
+
+  }
+
+
+        return true;
+    }
+
+
+/*
 
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
@@ -378,7 +400,7 @@ public class MainPage extends Activity
     public void onConfigurationChanged(Configuration newConfig){
         super.onConfigurationChanged(newConfig);
         mActionBarDrawerToggle.onConfigurationChanged(newConfig);
-    }
+    }*/
 
   static {
     System.loadLibrary("native-lib");
