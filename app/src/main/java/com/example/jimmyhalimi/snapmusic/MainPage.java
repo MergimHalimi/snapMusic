@@ -262,17 +262,31 @@ public class MainPage extends Activity
           {
             ImageProcessingThread img_procc_ = new ImageProcessingThread(image_path_);
             img_procc_.start();
-            try
-            {
-              img_procc_.join();
 
-            }
-            catch (InterruptedException e)
+            while(img_procc_.isAlive())
             {
-              e.printStackTrace();
+              try
+              {
+                img_procc_.join();
+              }
+              catch (InterruptedException e)
+              {
+                e.printStackTrace();
+              }
             }
+
             threadFinished(img_procc_.getBuff());
 
+//            try
+//            {
+//              img_procc_.join();
+//
+//              threadFinished(img_procc_.getBuff());
+//            }
+//            catch (InterruptedException e)
+//            {
+//              e.printStackTrace();
+//            }
           }
           //onPause();
         }
