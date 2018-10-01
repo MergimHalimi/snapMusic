@@ -9,6 +9,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Camera;
 import android.net.Uri;
@@ -38,6 +39,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 
 import android.widget.Toast;
+import android.widget.ProgressBar;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -58,9 +60,11 @@ public class MainPage extends Activity
   private int SELECT_FILE = 1;
   private static final String TAG = "MainPage";
   private static final int REQUEST_CODE = 1;
-  private boolean camON = true, front = false, flashOn = false ;
-
-
+  private boolean camON = true, front = false, flashOn = false, processing_ = false;
+  private String image_path_;
+  private ProgressBar spinner;
+  private ObservableBoolean is_processing_ = new ObservableBoolean();
+  private static MainPage main_instace_;
 
     String[] listArray;
     ListView drawerListView;
@@ -72,10 +76,9 @@ public class MainPage extends Activity
   {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.main_page);
+    main_instace_ = this;
 
     verifyPermissions();
-
-
 
       listArray = getResources().getStringArray(R.array.listArray);
       drawerListView = (ListView)findViewById(R.id.drawerLayoutListId);
@@ -124,9 +127,9 @@ public class MainPage extends Activity
 
 
       cameraKitView = findViewById(R.id.camera);
-    photoButton = findViewById(R.id.photoButton);
-    ivImage = (ImageView) findViewById(R.id.ivImage);
-    photoButton.setOnClickListener(new View.OnClickListener()
+      photoButton = findViewById(R.id.photoButton);
+      ivImage = (ImageView) findViewById(R.id.ivImage);
+      photoButton.setOnClickListener(new View.OnClickListener()
     {
       @Override
       public void onClick(View v) 
@@ -135,16 +138,16 @@ public class MainPage extends Activity
         cameraKitView.setVisibility(View.VISIBLE);
         btnChange.setVisibility(View.VISIBLE);
         btnFlash.setVisibility(View.VISIBLE);
+
         if (camON)
         {
           cameraKitView.captureImage(new CameraKitView.ImageCallback()
           {
-
             @Override
             public void onImage(CameraKitView cameraKitView, final byte[] photo)
             {
               // write the photo in device storage
-              File savedPhoto = new File(Environment.getExternalStoragePublicDirectory(   Environment.DIRECTORY_DCIM),System.currentTimeMillis() + ".jpg");
+              File savedPhoto = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM),System.currentTimeMillis() + ".jpg");
 
               try
               {
@@ -154,51 +157,22 @@ public class MainPage extends Activity
 
                 Toast.makeText(MainPage.this, "Saved " + savedPhoto, Toast.LENGTH_SHORT).show();
                 sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + savedPhoto.getAbsolutePath())));
-
-
               }
               catch (java.io.IOException e)
               {
                 e.printStackTrace();
                 Log.e("CKDemo", "Exception in photo callback");
               }
-
-              // Call Native c++  ------------------------------------------------------------------------------------------
-
-              Mat image_ = Imgcodecs.imread(savedPhoto.toString(), Imgcodecs.CV_LOAD_IMAGE_COLOR);
-
-              AlertDialog.Builder builder_ = new AlertDialog.Builder(MainPage.this);
-
-              String _buf = "";
-              Vector result_list_ = getList(image_.getNativeObjAddr());
-
-              for (int i = 0; i < result_list_.size(); i++)
-              {
-                _buf = _buf + result_list_.get(i).toString() + ", \n";
-              }
-
-             builder_.setMessage(_buf);
-             builder_.setCancelable(true);
-             builder_.setPositiveButton( "OK", 
-                                          new DialogInterface.OnClickListener() 
-                                          {
-                                            public void onClick(DialogInterface dialog, int id)
-                                            {
-                                              dialog.cancel();
-                                            }
-                                          });
-
-                AlertDialog alert2 =builder_.create();
-                alert2.show();
-
-                // Call Native c++  ------------------------------------------------------------------------------------------
+              image_path_ = savedPhoto.getAbsolutePath();
             }
+
           });
+         // loadImageInImageProcessor(image_path_);
         }
         camON = true;
-      }
+        setFlags(true);
+        }
     });
-
 
 
     btnChange = (Button)findViewById(R.id.btnChange);
@@ -260,6 +234,41 @@ public class MainPage extends Activity
             }
         }
     });
+
+    ///////////////////////////////
+    //ObservableBoolean is_processing_ = new ObservableBoolean();
+    //setFlags(processing_);
+
+    spinner = (ProgressBar) findViewById(R.id.progress_bar_);
+    is_processing_.setOnBooleanChangeListener(new ObservableBoolean.OnBooleanChangeListener()
+    {
+      @Override
+      public void onBooleanChanged(boolean newValue)
+      {
+        ImageProcessingThread img_procc_ = new ImageProcessingThread(image_path_);
+
+        if (newValue == false)
+        {
+          image_path_ = null;
+          spinner.setVisibility(View.GONE);
+          cameraKitView.onResume();
+          //onResume();
+        }
+        else if (newValue == true)
+        {
+          spinner.setVisibility(View.VISIBLE);
+          spinner.bringToFront();
+          cameraKitView.onPause();
+          if(image_path_ != null)
+          {
+            img_procc_.start();
+          }
+          //onPause();
+        }
+      }
+    });
+    //////////////////////////////////
+
   }
 
   private void galleryIntent()
@@ -295,6 +304,9 @@ public class MainPage extends Activity
               e.printStackTrace();
           }
       }
+
+      //loadImageInImageProcessor("");
+
       // bm is the image from gallery
       ivImage.setImageBitmap(bm);
   }
@@ -308,8 +320,8 @@ public class MainPage extends Activity
 
   @Override
   protected void onPause() {
-      cameraKitView.onPause();
-      super.onPause();
+    cameraKitView.onPause();
+    super.onPause();
   }
 
   @Override
@@ -320,8 +332,6 @@ public class MainPage extends Activity
 
 
   }
-
-
 
   public void verifyPermissions(){
         Log.d(TAG, "verifyPermissions: asking user for permissions");
@@ -342,9 +352,6 @@ public class MainPage extends Activity
         }
     }
 
-
-
-
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
 
@@ -353,8 +360,6 @@ public class MainPage extends Activity
   }
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
-
-
 
       if(mActionBarDrawerToggle.onOptionsItemSelected(item)){
           return true;
@@ -380,11 +385,61 @@ public class MainPage extends Activity
         mActionBarDrawerToggle.onConfigurationChanged(newConfig);
     }
 
+//    private void loadImageInImageProcessor(String path)
+//    {
+//      if (path != null) {
+//        //isProcessing flag -> then the function will be called on create
+//        setFlags(true);
+//
+//        // Call Native c++  ------------------------------------------------------------------------------------------
+//
+//        Mat image_ = Imgcodecs.imread(path, Imgcodecs.CV_LOAD_IMAGE_COLOR);
+//
+//        String _buf = "Path: " + path + "\nResults: \n";
+//        Vector result_list_ = getList(image_.getNativeObjAddr());
+//
+//        for (int i = 0; i < result_list_.size(); i++) {
+//          _buf = _buf + result_list_.get(i).toString() + ", \n";
+//        }
+//
+//        // Call Native c++  ------------------------------------------------------------------------------------------
+//
+//        AlertDialog.Builder builder_ = new AlertDialog.Builder(MainPage.this);
+//
+//        builder_.setMessage(_buf);
+//        builder_.setCancelable(true);
+//        builder_.setPositiveButton("OK",
+//
+//          new DialogInterface.OnClickListener() {
+//            public void onClick(DialogInterface dialog, int id) {
+//              dialog.cancel();
+//              setFlags(false);
+//            }
+//          });
+//
+//        AlertDialog alert2 = builder_.create();
+//        alert2.show();
+//        image_path_ = null;
+//      }
+//    }
+
+    public void setFlags(boolean flag_)
+    {
+      processing_ = flag_;
+      is_processing_.triggerBooleanListener(flag_);
+    }
+
+
+
+  public static MainPage getActivity() {
+    return main_instace_;
+  }
+
   static {
     System.loadLibrary("native-lib");
     System.loadLibrary("opencv_java3");
   }
 
-  //C++ function declaration
-  public native Vector getList(long matAddr);
+//  //C++ function declaration
+//  public native Vector getList(long matAddr);
 }
