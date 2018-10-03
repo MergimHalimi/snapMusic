@@ -9,6 +9,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -44,9 +45,12 @@ import android.widget.ListView;
 import android.widget.Toast;
 import android.widget.ProgressBar;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Vector;
 
 
@@ -65,7 +69,7 @@ public class MainPage extends AppCompatActivity
   private static final String TAG = "MainPage";
   private static final int REQUEST_CODE = 1;
   private boolean camON = true, front = false, flashOn = false;
-  private String image_path_;
+  private String image_path_, dir = "assets/datasets";
   private ProgressBar spinner;
   private ObservableBoolean is_processing_ = new ObservableBoolean();
   private String _buf;
@@ -80,7 +84,10 @@ public class MainPage extends AppCompatActivity
     super.onCreate(savedInstanceState);
     setContentView(R.layout.main_page);
 
+
+
     verifyPermissions();
+      copyAssets();
 
       Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
       setSupportActionBar(toolbar);
@@ -405,7 +412,56 @@ public class MainPage extends AppCompatActivity
     // Call Native c++  ------------------------------------------------------------------------------------------
   }
 
-  //C++ function declaration
+// functions to read files from assets and write them in storage
+
+    private void copyAssets() {
+        AssetManager assetManager = getAssets();
+        String[] files = null;
+        try {
+            files = assetManager.list("datasets");
+        } catch (IOException e) {
+            Log.e("tag", "Failed to get asset file list.", e);
+        }
+
+        String folder_main = "datasets";
+
+        File f = new File(Environment.getExternalStorageDirectory(), folder_main);
+        if (!f.exists()) {
+            f.mkdirs();
+
+
+            for(String filename : files) {
+                InputStream in = null;
+                OutputStream out = null;
+                try {
+                    in = assetManager.open("datasets/" + filename);
+                    File outFile = new File(f +"/", filename);
+                    out = new FileOutputStream(outFile);
+                    copyFile(in, out);
+                    in.close();
+                    in = null;
+                    out.flush();
+                    out.close();
+                    out = null;
+                } catch(IOException e) {
+                    Log.e("tag", "Failed to copy asset file: " + filename, e);
+                }
+            }
+        }
+
+
+    }
+
+    private void copyFile(InputStream in, OutputStream out) throws IOException {
+        byte[] buffer = new byte[1024];
+        int read;
+        while((read = in.read(buffer)) != -1){
+            out.write(buffer, 0, read);
+        }
+    }
+  public static MainPage getActivity() {
+    return main_instace_;
+
   static
   {
     System.loadLibrary("native-lib");
