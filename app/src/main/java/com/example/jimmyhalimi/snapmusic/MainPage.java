@@ -266,6 +266,7 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
     img_processor.addListener(listener);
 
     spinner = (ProgressBar) findViewById(R.id.progress_bar_);
+    spinner.setVisibility(View.GONE);
     is_processing_.setOnBooleanChangeListener(new ObservableBoolean.OnBooleanChangeListener()
     {
       @Override
@@ -313,10 +314,6 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
 
       if (requestCode == SELECT_FILE)
       {
-        Uri selectedImageUri = data.getData( );
-        String picturePath = getPath( MainPage.this.getApplicationContext( ), selectedImageUri );
-        Log.d("Picture Path", picturePath);
-
         onSelectFromGalleryResult(data);
       }
       //  else if (requestCode == REQUEST_CAMERA)
@@ -431,7 +428,6 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
     Bitmap bm=null;
     if (data != null)
     {
-
       try
       {
         bm = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), data.getData());
@@ -442,10 +438,13 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
       }
     }
 
-    //loadImageInImageProcessor("");
-
     // bm is the image from gallery
     ivImage.setImageBitmap(bm);
+
+    Uri selectedImageUri = data.getData( );
+    String picturePath = getPath( MainPage.this.getApplicationContext( ), selectedImageUri );
+    image_path_ = picturePath;
+    setFlags(true);
   }
 
   @Override
