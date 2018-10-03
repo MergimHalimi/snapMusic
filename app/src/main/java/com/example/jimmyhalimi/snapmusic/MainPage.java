@@ -6,17 +6,21 @@ import android.app.Activity;
 import android.app.AlertDialog;
 
 
+import android.content.ContentUris;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
-import android.content.res.Configuration;
+
 import android.database.Cursor;
 import android.graphics.Bitmap;
 
 import android.net.Uri;
+
 import android.os.Build;
 import android.os.Environment;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
@@ -37,7 +41,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ArrayAdapter;
+
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -45,7 +49,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 import android.widget.ProgressBar;
 
-import java.io.BufferedOutputStream;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -54,7 +58,7 @@ import java.io.OutputStream;
 import java.util.Vector;
 
 
-import org.opencv.android.OpenCVLoader;
+
 import org.opencv.core.Mat;
 import org.opencv.imgcodecs.Imgcodecs;
 
@@ -74,9 +78,6 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
   private String _buf;
 
   String[] listArray;
-  ListView drawerListView;
-  ActionBarDrawerToggle mActionBarDrawerToggle;
-  DrawerLayout mDrawerLayout;
 
   @Override
   protected void onCreate(Bundle savedInstanceState)
@@ -294,6 +295,7 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
 
   private void galleryIntent()
   {
+
     Intent intent = new Intent();
     intent.setType("image/*");
     intent.setAction(Intent.ACTION_GET_CONTENT);
@@ -308,8 +310,13 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
 
     if (resultCode == Activity.RESULT_OK)
     {
+
       if (requestCode == SELECT_FILE)
       {
+        Uri selectedImageUri = data.getData( );
+        String picturePath = getPath( MainPage.this.getApplicationContext( ), selectedImageUri );
+        Log.d("Picture Path", picturePath);
+
         onSelectFromGalleryResult(data);
       }
       //  else if (requestCode == REQUEST_CAMERA)
@@ -317,12 +324,114 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
     }
   }
 
+
+  public static String getPath(final Context context, final Uri uri) {
+
+    final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
+
+    // DocumentProvider
+    if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
+      // ExternalStorageProvider
+      if (isExternalStorageDocument(uri)) {
+        final String docId = DocumentsContract.getDocumentId(uri);
+        final String[] split = docId.split(":");
+        final String type = split[0];
+
+        if ("primary".equalsIgnoreCase(type)) {
+          return Environment.getExternalStorageDirectory() + "/" + split[1];
+        }
+
+        // TODO handle non-primary volumes
+      }
+      // DownloadsProvider
+      else if (isDownloadsDocument(uri)) {
+
+        final String id = DocumentsContract.getDocumentId(uri);
+        final Uri contentUri = ContentUris.withAppendedId(
+          Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
+
+        return getDataColumn(context, contentUri, null, null);
+      }
+      // MediaProvider
+      else if (isMediaDocument(uri)) {
+        final String docId = DocumentsContract.getDocumentId(uri);
+        final String[] split = docId.split(":");
+        final String type = split[0];
+
+        Uri contentUri = null;
+        if ("image".equals(type)) {
+          contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        } else if ("video".equals(type)) {
+          contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+        } else if ("audio".equals(type)) {
+          contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        }
+
+        final String selection = "_id=?";
+        final String[] selectionArgs = new String[] {
+          split[1]
+        };
+
+        return getDataColumn(context, contentUri, selection, selectionArgs);
+      }
+    }
+    // MediaStore (and general)
+    else if ("content".equalsIgnoreCase(uri.getScheme())) {
+      return getDataColumn(context, uri, null, null);
+    }
+    // File
+    else if ("file".equalsIgnoreCase(uri.getScheme())) {
+      return uri.getPath();
+    }
+
+    return null;
+  }
+
+
+  public static String getDataColumn(Context context, Uri uri, String selection,
+                                     String[] selectionArgs) {
+
+    Cursor cursor = null;
+    final String column = "_data";
+    final String[] projection = {
+      column
+    };
+
+    try {
+      cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs,
+        null);
+      if (cursor != null && cursor.moveToFirst()) {
+        final int column_index = cursor.getColumnIndexOrThrow(column);
+        return cursor.getString(column_index);
+      }
+    } finally {
+      if (cursor != null)
+        cursor.close();
+    }
+    return null;
+  }
+
+
+  public static boolean isExternalStorageDocument(Uri uri) {
+    return "com.android.externalstorage.documents".equals(uri.getAuthority());
+  }
+
+  public static boolean isDownloadsDocument(Uri uri) {
+    return "com.android.providers.downloads.documents".equals(uri.getAuthority());
+  }
+
+  public static boolean isMediaDocument(Uri uri) {
+    return "com.android.providers.media.documents".equals(uri.getAuthority());
+  }
+
+
   @SuppressWarnings("deprecation")
   private void onSelectFromGalleryResult(Intent data)
   {
     Bitmap bm=null;
     if (data != null)
     {
+
       try
       {
         bm = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), data.getData());
@@ -390,8 +499,8 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
   {
     if (item.getItemId()==R.id.Settings)
     {
-      //Intent objS = new Intent(MainPage.this,Settings.class);
-      //startActivity(objS);
+      Intent objS = new Intent(MainPage.this,Settings.class);
+      startActivity(objS);
     }
     return super.onOptionsItemSelected(item);
   }
@@ -405,7 +514,8 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
 
     if (id == R.id.nav_home)
     {
-
+      Intent objH = new Intent(MainPage.this,MainPage.class);
+      startActivity(objH);
     }
     else if (id == R.id.nav_gallery)
     {
@@ -482,11 +592,14 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
           out.flush();
           out.close();
           out = null;
+
         }
         catch(IOException e)
         {
           Log.e("tag", "Failed to copy asset file: " + filename, e);
         }
+
+
       }
     }
   }
