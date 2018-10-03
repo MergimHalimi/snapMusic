@@ -10,6 +10,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 
 import android.net.Uri;
@@ -41,6 +42,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 
 import android.widget.Toast;
+import android.widget.ProgressBar;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -62,10 +64,11 @@ public class MainPage extends AppCompatActivity
   private int SELECT_FILE = 1;
   private static final String TAG = "MainPage";
   private static final int REQUEST_CODE = 1;
-  private boolean camON = true, front = false, flashOn = false ;
-
-
-
+  private boolean camON = true, front = false, flashOn = false;
+  private String image_path_;
+  private ProgressBar spinner;
+  private ObservableBoolean is_processing_ = new ObservableBoolean();
+  private String _buf;
     String[] listArray;
     ListView drawerListView;
     ActionBarDrawerToggle mActionBarDrawerToggle;
@@ -91,31 +94,6 @@ public class MainPage extends AppCompatActivity
       NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
       navigationView.setNavigationItemSelectedListener(this);
 
-
-/*
-      listArray = getResources().getStringArray(R.array.listArray);
-      drawerListView = (ListView)findViewById(R.id.drawerLayoutListId);
-      mDrawerLayout = (DrawerLayout) findViewById(R.id.drawerLayoutId);
-
-      drawerListView.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_activated_1, listArray));
-
-      //Create Drawer Toggle
-      mActionBarDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.open_drawer, R.string.close_drawer){
-          @Override
-          public void onDrawerOpened(View drawerView) {
-              super.onDrawerOpened(drawerView);
-          }
-
-          @Override
-          public void onDrawerClosed(View drawerView) {
-              super.onDrawerClosed(drawerView);
-          }
-      }; */
-
-//     mDrawerLayout.setDrawerListener(mActionBarDrawerToggle);
-
-      //Enable the drawer to open and close
-
      // getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
       getSupportActionBar().setCustomView(R.layout.abs_layout);
       getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -133,18 +111,16 @@ public class MainPage extends AppCompatActivity
         cameraKitView.setVisibility(View.VISIBLE);
         btnChange.setVisibility(View.VISIBLE);
         btnFlash.setVisibility(View.VISIBLE);
+
         if (camON)
         {
           cameraKitView.captureImage(new CameraKitView.ImageCallback()
           {
-
-
             @Override
             public void onImage(final CameraKitView cameraKitView, final byte[] photo)
             {
               // write the photo in device storage
-              File savedPhoto = new File(Environment.getExternalStoragePublicDirectory(   Environment.DIRECTORY_DCIM),System.currentTimeMillis() + ".jpg");
-             // cameraKitView.onPause();
+              File savedPhoto = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM),System.currentTimeMillis() + ".jpg");
               try
               {
                 FileOutputStream outputStream = new FileOutputStream(savedPhoto.getAbsolutePath());
@@ -153,8 +129,6 @@ public class MainPage extends AppCompatActivity
 
                 Toast.makeText(MainPage.this, "Saved " + savedPhoto, Toast.LENGTH_SHORT).show();
                 sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + savedPhoto.getAbsolutePath())));
-
-
               }
               catch (java.io.IOException e)
               {
@@ -162,45 +136,16 @@ public class MainPage extends AppCompatActivity
                 Log.e("CKDemo", "Exception in photo callback");
               }
 
-              // Call Native c++  ------------------------------------------------------------------------------------------
-                Intent objI = new Intent(MainPage.this, Settings.class);
-                startActivity(objI);
-             /* Mat image_ = Imgcodecs.imread(savedPhoto.toString(), Imgcodecs.CV_LOAD_IMAGE_COLOR);
-
-              AlertDialog.Builder builder_ = new AlertDialog.Builder(MainPage.this);
-
-              String _buf = "";
-              Vector result_list_ = getList(image_.getNativeObjAddr());
-
-              for (int i = 0; i < result_list_.size(); i++)
-              {
-                _buf = _buf + result_list_.get(i).toString() + ", \n";
-              }
-
-             builder_.setMessage(_buf);
-             builder_.setCancelable(true);
-             builder_.setPositiveButton( "OK", 
-                                          new DialogInterface.OnClickListener() 
-                                          {
-                                            public void onClick(DialogInterface dialog, int id)
-                                            {
-
-
-
-                                            }
-                                          });
-
-                AlertDialog alert2 =builder_.create();
-                alert2.show();   */
-
-                // Call Native c++  ------------------------------------------------------------------------------------------
+              image_path_ = savedPhoto.getAbsolutePath();
             }
+
           });
+         // loadImageInImageProcessor(image_path_);
         }
         camON = true;
+        setFlags(true);
       }
     });
-
 
 
     btnChange = (Button)findViewById(R.id.btnChange);
@@ -262,6 +207,64 @@ public class MainPage extends AppCompatActivity
             }
         }
     });
+
+    ///////////////////////////////
+
+    final image_processing_thread img_processor = new image_processing_thread() {
+      @Override
+      public void doWork() {
+        loadImageInImageProcessor(image_path_);
+      }
+    };
+
+    image_processing_listener listener = new image_processing_listener() {
+      @Override
+      public void threadComplete(Runnable runner) {
+        AlertDialog.Builder builder_ = new AlertDialog.Builder(MainPage.this);
+
+        builder_.setMessage(_buf);
+        builder_.setCancelable(true);
+        builder_.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+          public void onClick(DialogInterface dialog, int id)
+          {
+            dialog.cancel();
+            _buf = null;
+            setFlags(false);
+          }
+        });
+
+        AlertDialog alert2 = builder_.create();
+        alert2.show();
+      }
+    };
+
+    img_processor.addListener(listener);
+
+    spinner = (ProgressBar) findViewById(R.id.progress_bar_);
+    is_processing_.setOnBooleanChangeListener(new ObservableBoolean.OnBooleanChangeListener()
+    {
+      @Override
+      public void onBooleanChanged(boolean newValue)
+      {
+        if (newValue == false)
+        {
+          image_path_ = null;
+          spinner.setVisibility(View.GONE);
+          onResume();
+        }
+        else if (newValue == true)
+        {
+          spinner.setVisibility(View.VISIBLE);
+          spinner.bringToFront();
+          onPause();
+          if(image_path_ != null)
+          {
+            img_processor.run();
+          }
+        }
+      }
+    });
+    //////////////////////////////////
   }
 
   private void galleryIntent()
@@ -297,6 +300,9 @@ public class MainPage extends AppCompatActivity
               e.printStackTrace();
           }
       }
+
+      //loadImageInImageProcessor("");
+
       // bm is the image from gallery
       ivImage.setImageBitmap(bm);
   }
@@ -310,8 +316,8 @@ public class MainPage extends AppCompatActivity
 
   @Override
   protected void onPause() {
-      cameraKitView.onPause();
-      super.onPause();
+    cameraKitView.onPause();
+    super.onPause();
   }
 
   @Override
@@ -322,8 +328,6 @@ public class MainPage extends AppCompatActivity
 
 
   }
-
-
 
   public void verifyPermissions(){
         Log.d(TAG, "verifyPermissions: asking user for permissions");
@@ -344,9 +348,6 @@ public class MainPage extends AppCompatActivity
         }
     }
 
-
-
-
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
 
@@ -356,13 +357,10 @@ public class MainPage extends AppCompatActivity
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
 
-
-
-
       if (item.getItemId()==R.id.Settings)
       {
-          Intent objS = new Intent(MainPage.this,Settings.class);
-          startActivity(objS);
+          //Intent objS = new Intent(MainPage.this,Settings.class);
+          //startActivity(objS);
       }
       return super.onOptionsItemSelected(item);
   }
@@ -387,22 +385,29 @@ public class MainPage extends AppCompatActivity
         return true;
     }
 
-
-/*
-
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        mActionBarDrawerToggle.syncState();
+    public void setFlags(boolean flag_) {
+      is_processing_.triggerBooleanListener(flag_);
     }
 
-    @Override
-    public void onConfigurationChanged(Configuration newConfig){
-        super.onConfigurationChanged(newConfig);
-        mActionBarDrawerToggle.onConfigurationChanged(newConfig);
-    }*/
+  private void loadImageInImageProcessor(String path)
+  {
+    // Call Native c++  ------------------------------------------------------------------------------------------
 
-  static {
+    Mat image_ = Imgcodecs.imread(path, Imgcodecs.CV_LOAD_IMAGE_COLOR);
+
+    this._buf = "Path: " + path + "\nResults: \n";
+    Vector result_list_ = getList(image_.getNativeObjAddr());
+
+    for (int i = 0; i < result_list_.size(); i++) {
+      _buf = _buf + result_list_.get(i).toString() + ", \n";
+    }
+
+    // Call Native c++  ------------------------------------------------------------------------------------------
+  }
+
+  //C++ function declaration
+  static
+  {
     System.loadLibrary("native-lib");
     System.loadLibrary("opencv_java3");
   }
