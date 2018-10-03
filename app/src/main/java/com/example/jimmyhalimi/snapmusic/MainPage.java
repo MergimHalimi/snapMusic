@@ -64,8 +64,7 @@ public class MainPage extends Activity
   private String image_path_;
   private ProgressBar spinner;
   private ObservableBoolean is_processing_ = new ObservableBoolean();
-  private static MainPage main_instace_;
-
+  private String _buf;
     String[] listArray;
     ListView drawerListView;
     ActionBarDrawerToggle mActionBarDrawerToggle;
@@ -76,7 +75,6 @@ public class MainPage extends Activity
   {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.main_page);
-    main_instace_ = this;
 
     verifyPermissions();
 
@@ -236,63 +234,63 @@ public class MainPage extends Activity
     });
 
     ///////////////////////////////
-    //ObservableBoolean is_processing_ = new ObservableBoolean();
-    //setFlags(processing_);
+
+    final image_processing_thread img_processor = new image_processing_thread() {
+      @Override
+      public void doWork() {
+        loadImageInImageProcessor(image_path_);
+      }
+    };
+
+    image_processing_listener listener = new image_processing_listener() {
+      @Override
+      public void threadComplete(Runnable runner) {
+        AlertDialog.Builder builder_ = new AlertDialog.Builder(MainPage.this);
+
+        builder_.setMessage(_buf);
+        builder_.setCancelable(true);
+        builder_.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+          public void onClick(DialogInterface dialog, int id)
+          {
+            dialog.cancel();
+            _buf = null;
+            setFlags(false);
+          }
+        });
+
+        AlertDialog alert2 = builder_.create();
+        alert2.show();
+      }
+    };
+
+    img_processor.addListener(listener);
 
     spinner = (ProgressBar) findViewById(R.id.progress_bar_);
-
     is_processing_.setOnBooleanChangeListener(new ObservableBoolean.OnBooleanChangeListener()
     {
       @Override
-      public void onBooleanChanged(boolean newValue) {
-
+      public void onBooleanChanged(boolean newValue)
+      {
         if (newValue == false)
         {
           image_path_ = null;
           spinner.setVisibility(View.GONE);
-          cameraKitView.onResume();
-          //onResume();
+          onResume();
         }
         else if (newValue == true)
         {
           spinner.setVisibility(View.VISIBLE);
           spinner.bringToFront();
-          cameraKitView.onPause();
+          onPause();
           if(image_path_ != null)
           {
-            ImageProcessingThread img_procc_ = new ImageProcessingThread(image_path_);
-            img_procc_.start();
-
-            while(img_procc_.isAlive())
-            {
-              try
-              {
-                img_procc_.join();
-              }
-              catch (InterruptedException e)
-              {
-                e.printStackTrace();
-              }
-            }
-
-            threadFinished(img_procc_.getBuff());
-
-//            try
-//            {
-//              img_procc_.join();
-//
-//              threadFinished(img_procc_.getBuff());
-//            }
-//            catch (InterruptedException e)
-//            {
-//              e.printStackTrace();
-//            }
+            img_processor.run();
           }
-          //onPause();
         }
       }
     });
     //////////////////////////////////
+
 
   }
 
@@ -410,72 +408,33 @@ public class MainPage extends Activity
         mActionBarDrawerToggle.onConfigurationChanged(newConfig);
     }
 
-//    private void loadImageInImageProcessor(String path)
-//    {
-//      if (path != null) {
-//        //isProcessing flag -> then the function will be called on create
-//        setFlags(true);
-//
-//        // Call Native c++  ------------------------------------------------------------------------------------------
-//
-//        Mat image_ = Imgcodecs.imread(path, Imgcodecs.CV_LOAD_IMAGE_COLOR);
-//
-//        String _buf = "Path: " + path + "\nResults: \n";
-//        Vector result_list_ = getList(image_.getNativeObjAddr());
-//
-//        for (int i = 0; i < result_list_.size(); i++) {
-//          _buf = _buf + result_list_.get(i).toString() + ", \n";
-//        }
-//
-//        // Call Native c++  ------------------------------------------------------------------------------------------
-//
-//        AlertDialog.Builder builder_ = new AlertDialog.Builder(MainPage.this);
-//
-//        builder_.setMessage(_buf);
-//        builder_.setCancelable(true);
-//        builder_.setPositiveButton("OK",
-//
-//          new DialogInterface.OnClickListener() {
-//            public void onClick(DialogInterface dialog, int id) {
-//              dialog.cancel();
-//              setFlags(false);
-//            }
-//          });
-//
-//        AlertDialog alert2 = builder_.create();
-//        alert2.show();
-//        image_path_ = null;
-//      }
-//    }
-
     public void setFlags(boolean flag_) {
       is_processing_.triggerBooleanListener(flag_);
     }
 
-public void threadFinished(String _buf)
-{
-  AlertDialog.Builder builder_ = new AlertDialog.Builder(MainPage.this);
+  private void loadImageInImageProcessor(String path)
+  {
+    // Call Native c++  ------------------------------------------------------------------------------------------
 
-  builder_.setMessage(_buf);
-  builder_.setCancelable(true);
-  builder_.setPositiveButton("OK",
+    Mat image_ = Imgcodecs.imread(path, Imgcodecs.CV_LOAD_IMAGE_COLOR);
 
-    new DialogInterface.OnClickListener() {
-      public void onClick(DialogInterface dialog, int id)
-      {
-        dialog.cancel();
-        setFlags(false);
-      }
-    });
+    this._buf = "Path: " + path + "\nResults: \n";
+    Vector result_list_ = getList(image_.getNativeObjAddr());
 
-  AlertDialog alert2 = builder_.create();
-  alert2.show();
-}
+    for (int i = 0; i < result_list_.size(); i++) {
+      _buf = _buf + result_list_.get(i).toString() + ", \n";
+    }
 
-  public static MainPage getActivity() {
-    return main_instace_;
+    // Call Native c++  ------------------------------------------------------------------------------------------
   }
 
-//  //C++ function declaration
-//  public native Vector getList(long matAddr);
+  //C++ function declaration
+  static
+  {
+    System.loadLibrary("native-lib");
+    System.loadLibrary("opencv_java3");
+  }
+
+  //C++ function declaration
+  public native Vector getList(long matAddr);
 }
