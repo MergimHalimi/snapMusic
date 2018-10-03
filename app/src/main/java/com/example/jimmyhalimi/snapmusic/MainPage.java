@@ -433,7 +433,8 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
     this._buf = "Path: " + path + "\nResults: \n";
     Vector result_list_ = getList(image_.getNativeObjAddr());
 
-    Imgcodecs.imwrite(path, image_);
+    String processed_img_path_ = path.replace("snappedImg", "processedImg");
+    Imgcodecs.imwrite(processed_img_path_, image_);
 
     for (int i = 0; i < result_list_.size(); i++) {
       _buf = _buf + result_list_.get(i).toString() + ", \n";
