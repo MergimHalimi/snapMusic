@@ -145,12 +145,36 @@ bool ImageProcessor::filterWithConfidence(cv::Mat detections)
     if (confidence_ >= this->conf_threshold_)
     {
       std::string class_name_ = objectClass < classes_.size() ?
-                              classes_[objectClass] :
-                              "CLASSES::UNCLASSIFIED";
+                                classes_[objectClass] :
+                                "CLASSES::UNCLASSIFIED";
 
       std::string filtered_result_ = "Class: " + class_name_ + ", Confidence: " + std::to_string(confidence_);
 
+      //Data vector
       this->image_data_.push_back(filtered_result_);
+
+      //Image with draw results
+      float x_center = detections.at<float>(i, 0) * this->image_.cols;
+      float y_center = detections.at<float>(i, 1) * this->image_.rows;
+      float width = detections.at<float>(i, 2) * this->image_.cols;
+      float height = detections.at<float>(i, 3) * this->image_.rows;
+
+      cv::Point p1(cvRound(x_center - width / 2), cvRound(y_center - height / 2));
+      cv::Point p2(cvRound(x_center + width / 2), cvRound(y_center + height / 2));
+      cv::Rect object(p1, p2);
+
+      cv::Scalar object_roi_color(0, 255, 0);
+      rectangle(this->image_, object, object_roi_color);
+
+      cv::String label = cv::format("%s: %.2f", class_name_.c_str(), confidence_);
+      int baseLine = 0;
+      cv::Size labelSize = getTextSize(label, cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
+
+      rectangle(this->image_, cv::Rect(p1, cv::Size(labelSize.width, labelSize.height + baseLine)),
+                object_roi_color, cv::FILLED);
+
+      putText(this->image_, label, p1 + cv::Point(0, labelSize.height),
+              cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0));
     }
   }
 
