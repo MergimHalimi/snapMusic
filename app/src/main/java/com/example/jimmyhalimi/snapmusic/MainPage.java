@@ -71,7 +71,6 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
   private String image_path_, dir = "assets/datasets";
   private ProgressBar spinner;
   private ObservableBoolean is_processing_ = new ObservableBoolean();
-  private Mat image_;
   private String _buf;
 
   String[] listArray;
@@ -273,14 +272,6 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
       {
         if (newValue == false)
         {
-          if(!image_.empty() && image_path_ != null)
-          {
-            String processed_img_path_ = image_path_.replace("snappedImg", "processedImg");
-            processed_img_path_ = processed_img_path_.replace(".jpg", "_processed.jpg");
-            Imgcodecs.imwrite(processed_img_path_, image_);
-            Toast.makeText(MainPage.this, "Saved " + processed_img_path_, Toast.LENGTH_SHORT).show();
-            sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + processed_img_path_)));
-          }
           _buf = null;
           image_path_ = null;
           spinner.setVisibility(View.GONE);
@@ -437,10 +428,16 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
   {
     // Call Native c++  ------------------------------------------------------------------------------------------
 
-    image_ = Imgcodecs.imread(path, Imgcodecs.CV_LOAD_IMAGE_COLOR);
+    Mat image_ = Imgcodecs.imread(path, Imgcodecs.CV_LOAD_IMAGE_COLOR);
 
     this._buf = "Path: " + path + "\nResults: \n";
     Vector result_list_ = getList(image_.getNativeObjAddr());
+
+    String processed_img_path_ = image_path_.replace("snappedImg", "processedImg");
+    processed_img_path_ = processed_img_path_.replace(".jpg", "_processed.jpg");
+    Imgcodecs.imwrite(processed_img_path_, image_);
+    Toast.makeText(MainPage.this, "Saved " + processed_img_path_, Toast.LENGTH_SHORT).show();
+    sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + processed_img_path_)));
 
     for (int i = 0; i < result_list_.size(); i++) {
       _buf = _buf + result_list_.get(i).toString() + ", \n";
