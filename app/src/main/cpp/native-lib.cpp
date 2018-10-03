@@ -16,14 +16,15 @@ JNIEXPORT jobject JNICALL
     // Get addElement method
     jmethodID vecAdd = env->GetMethodID(clsVec, "addElement", "(Ljava/lang/Object;)V");
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////
     //Part to call the image processor class
-    cv::Mat* pInputImage = (cv::Mat*)addrInputImage;
+    cv::Mat* pInputImage = reinterpret_cast<cv::Mat*>(addrInputImage);
 
     ImageProcessor image_;
 
     image_.initialize(*pInputImage);
 
-    image_.runProccessor();
+    image_.runProcessor();
 
     std::vector<std::string> _buf = image_.getData();
 
@@ -33,10 +34,7 @@ JNIEXPORT jobject JNICALL
       jstring retStr = env->NewStringUTF(_buf[i].c_str());
       env->CallVoidMethod(objVec, vecAdd, retStr);
     }
-    ///////////////////////////////////////////////
-
-    // Add string from parameter
-    //env->CallVoidMethod(objVec, vecAdd, str);
+    ///////////////////////////////////////////////////////////////////////////////////////////////
 
     // Always release local references.
     env->DeleteLocalRef(clsVec);

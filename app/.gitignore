@@ -9,3 +9,6 @@
 /build
 /captures
 .externalNativeBuild
+src/main/assets/datasets/yolov3.cfg
+src/main/assets/datasets/yolov3.weights
+src/main/assets/datasets/coco.names

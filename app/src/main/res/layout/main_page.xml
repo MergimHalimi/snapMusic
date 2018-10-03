@@ -7,13 +7,19 @@
     android:background="#000000"
     tools:context=".MainPage">
 
+    <ProgressBar
+      android:id="@+id/progress_bar_"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_centerHorizontal="true"
+      android:layout_centerVertical="true"
+      android:progressDrawable="@drawable/circular_progress_bar" />
+
     <com.camerakit.CameraKitView
         android:id="@+id/camera"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:camera_facing="back"/>
-
-
 
     <include layout="@layout/content_main"/>
 
