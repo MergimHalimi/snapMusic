@@ -2,7 +2,7 @@
 
 extern "C" {
 JNIEXPORT jobject JNICALL
-  Java_com_example_jimmyhalimi_snapmusic_ImageProcessingThread_getList(JNIEnv *env , jclass, long addrInputImage) {
+  Java_com_example_jimmyhalimi_snapmusic_MainPage_getList(JNIEnv *env , jclass, long addrInputImage) {
 
     // Find Class for Vector ImageProcessor
     jclass clsVec = env->FindClass("java/util/Vector");
