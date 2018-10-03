@@ -253,9 +253,8 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
         builder_.setPositiveButton("OK", new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int id)
           {
-            dialog.cancel();
-            _buf = null;
             setFlags(false);
+            dialog.cancel();
           }
         });
 
@@ -267,6 +266,7 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
     img_processor.addListener(listener);
 
     spinner = (ProgressBar) findViewById(R.id.progress_bar_);
+    spinner.setVisibility(View.GONE);
     is_processing_.setOnBooleanChangeListener(new ObservableBoolean.OnBooleanChangeListener()
     {
       @Override
@@ -274,6 +274,7 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
       {
         if (newValue == false)
         {
+          _buf = null;
           image_path_ = null;
           spinner.setVisibility(View.GONE);
           onResume();
@@ -313,10 +314,6 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
 
       if (requestCode == SELECT_FILE)
       {
-        Uri selectedImageUri = data.getData( );
-        String picturePath = getPath( MainPage.this.getApplicationContext( ), selectedImageUri );
-        Log.d("Picture Path", picturePath);
-
         onSelectFromGalleryResult(data);
       }
       //  else if (requestCode == REQUEST_CAMERA)
@@ -431,7 +428,6 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
     Bitmap bm=null;
     if (data != null)
     {
-
       try
       {
         bm = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), data.getData());
@@ -442,10 +438,13 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
       }
     }
 
-    //loadImageInImageProcessor("");
-
     // bm is the image from gallery
     ivImage.setImageBitmap(bm);
+
+    Uri selectedImageUri = data.getData( );
+    String picturePath = getPath( MainPage.this.getApplicationContext( ), selectedImageUri );
+    image_path_ = picturePath;
+    setFlags(true);
   }
 
   @Override
@@ -543,8 +542,11 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
     this._buf = "Path: " + path + "\nResults: \n";
     Vector result_list_ = getList(image_.getNativeObjAddr());
 
-    String processed_img_path_ = path.replace("snappedImg", "processedImg");
+    String processed_img_path_ = image_path_.replace("snappedImg", "processedImg");
+    processed_img_path_ = processed_img_path_.replace(".jpg", "_processed.jpg");
     Imgcodecs.imwrite(processed_img_path_, image_);
+    Toast.makeText(MainPage.this, "Saved " + processed_img_path_, Toast.LENGTH_SHORT).show();
+    sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + processed_img_path_)));
 
     for (int i = 0; i < result_list_.size(); i++) {
       _buf = _buf + result_list_.get(i).toString() + ", \n";
