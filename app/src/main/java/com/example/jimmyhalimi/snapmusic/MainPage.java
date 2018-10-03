@@ -105,6 +105,29 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
     getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     getSupportActionBar().setHomeButtonEnabled(true);
 
+
+    // create folder in dcim
+    String folder_snapMusic = "snapMusic";
+
+    final File f1 = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), folder_snapMusic);
+    if (!f1.exists()) {
+      f1.mkdirs();
+    }
+
+    String folder_processedImg = "processedImg";
+
+    File f2 = new File(f1, folder_processedImg);
+    if (!f2.exists()) {
+      f2.mkdirs();
+    }
+
+    String folder_snappedImg = "snappedImg";
+
+    final File f3 = new File(f1, folder_snappedImg);
+    if (!f3.exists()) {
+      f3.mkdirs();
+    }
+
     cameraKitView = findViewById(R.id.camera);
     photoButton = findViewById(R.id.photoButton);
     ivImage = (ImageView) findViewById(R.id.ivImage);
@@ -126,7 +149,7 @@ public class MainPage extends AppCompatActivity implements NavigationView.OnNavi
             public void onImage(final CameraKitView cameraKitView, final byte[] photo)
             {
               // write the photo in device storage
-              File savedPhoto = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM),System.currentTimeMillis() + ".jpg");
+              File savedPhoto = new File(f3,System.currentTimeMillis() + ".jpg");
               try
               {
                 FileOutputStream outputStream = new FileOutputStream(savedPhoto.getAbsolutePath());
