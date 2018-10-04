@@ -72,9 +72,6 @@ public class Home extends AppCompatActivity implements NavigationView.OnNavigati
   private static final int REQUEST_CODE = 1;
   private boolean camON = true, front = false, flashOn = false;
   private String image_path_, dir = "assets/datasets";
-  private ProgressBar spinner;
-  private ObservableBoolean is_processing_ = new ObservableBoolean();
-  private String _buf;
 
   String[] listArray;
 
@@ -165,7 +162,6 @@ public class Home extends AppCompatActivity implements NavigationView.OnNavigati
 
             }
           });
-          // loadImageInImageProcessor(image_path_);
         }
 
         //setFlags(true);
@@ -225,65 +221,6 @@ public class Home extends AppCompatActivity implements NavigationView.OnNavigati
         }
       }
     });
-
-    // Call Native c++ thread -----------------------------------------------------------------------------------------
-
-    final image_processing_thread img_processor = new image_processing_thread() {
-      @Override
-      public void doWork() {
-        loadImageInImageProcessor(image_path_);
-      }
-    };
-
-    image_processing_listener listener = new image_processing_listener() {
-      @Override
-      public void threadComplete(Runnable runner) {
-        AlertDialog.Builder builder_ = new AlertDialog.Builder(Home.this);
-
-        builder_.setMessage(_buf);
-        builder_.setCancelable(true);
-        builder_.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-          public void onClick(DialogInterface dialog, int id)
-          {
-            setFlags(false);
-            dialog.cancel();
-          }
-        });
-
-        AlertDialog alert2 = builder_.create();
-        alert2.show();
-      }
-    };
-
-    img_processor.addListener(listener);
-
-    spinner = (ProgressBar) findViewById(R.id.progress_bar_);
-    spinner.setVisibility(View.GONE);
-    is_processing_.setOnBooleanChangeListener(new ObservableBoolean.OnBooleanChangeListener()
-    {
-      @Override
-      public void onBooleanChanged(boolean newValue)
-      {
-        if (newValue == false)
-        {
-          _buf = null;
-          image_path_ = null;
-          spinner.setVisibility(View.GONE);
-          onResume();
-        }
-        else if (newValue == true)
-        {
-          spinner.setVisibility(View.VISIBLE);
-          spinner.bringToFront();
-          onPause();
-          if(image_path_ != null)
-          {
-            img_processor.run();
-          }
-        }
-      }
-    });
-    // Call Native c++ thread -----------------------------------------------------------------------------------------
   }
 
   private void galleryIntent()
@@ -431,7 +368,6 @@ public class Home extends AppCompatActivity implements NavigationView.OnNavigati
       startActivity(objI);
     }
 
-
    // setFlags(true);
   }
 
@@ -516,33 +452,6 @@ public class Home extends AppCompatActivity implements NavigationView.OnNavigati
     return true;
   }
 
-  public void setFlags(boolean flag_)
-  {
-    is_processing_.triggerBooleanListener(flag_);
-  }
-
-  private void loadImageInImageProcessor(String path)
-  {
-    // Call Native c++  ------------------------------------------------------------------------------------------
-
-    Mat image_ = Imgcodecs.imread(path, Imgcodecs.CV_LOAD_IMAGE_COLOR);
-
-    this._buf = "Path: " + path + "\nResults: \n";
-    Vector result_list_ = getList(image_.getNativeObjAddr());
-
-    String processed_img_path_ = image_path_.replace("snappedImg", "processedImg");
-    processed_img_path_ = processed_img_path_.replace(".jpg", "_processed.jpg");
-    Imgcodecs.imwrite(processed_img_path_, image_);
-    Toast.makeText(Home.this, "Saved " + processed_img_path_, Toast.LENGTH_SHORT).show();
-    sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + processed_img_path_)));
-
-    for (int i = 0; i < result_list_.size(); i++) {
-      _buf = _buf + result_list_.get(i).toString() + ", \n";
-    }
-
-    // Call Native c++  ------------------------------------------------------------------------------------------
-  }
-
   //functions to read files from assets and write them in storage
   private void copyAssets()
   {
@@ -598,13 +507,4 @@ public class Home extends AppCompatActivity implements NavigationView.OnNavigati
       out.write(buffer, 0, read);
     }
   }
-
-  static
-  {
-    System.loadLibrary("native-lib");
-    System.loadLibrary("opencv_java3");
-  }
-
-  //C++ function declaration
-  public native Vector getList(long matAddr);
 }
