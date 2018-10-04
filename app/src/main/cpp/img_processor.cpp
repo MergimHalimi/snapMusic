@@ -167,11 +167,11 @@ bool ImageProcessor::filterWithConfidence(cv::Mat detections)
       cv::Scalar object_roi_color;
       if (confidence_ >= 0 && confidence_ < 0.30)
       {
-        object_roi_color = cv::Scalar(255, 0, 0);
+        object_roi_color = cv::Scalar(0, 0, 255);
       }
       else if (confidence_ >= 0.30 && confidence_ < 0.60)
       {
-        object_roi_color = cv::Scalar(0, 0, 255);
+        object_roi_color = cv::Scalar(255, 0, 0);
       }
       else if (confidence_ >= 0.60 && confidence_ <= 1.0)
       {
