@@ -67,7 +67,6 @@ public class Home extends AppCompatActivity implements NavigationView.OnNavigati
 
   private CameraKitView cameraKitView;
   private Button photoButton, btnGallery, btnChange, btnFlash;
-  private ImageView ivImage;
   private int SELECT_FILE = 1;
   private static final String TAG = "Home";
   private static final int REQUEST_CODE = 1;
@@ -102,8 +101,7 @@ public class Home extends AppCompatActivity implements NavigationView.OnNavigati
     navigationView.setNavigationItemSelectedListener(this);
 
     //getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
-    getSupportActionBar().setCustomView(R.layout.abs_layout);
-    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+   // getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     getSupportActionBar().setHomeButtonEnabled(true);
 
 
@@ -131,18 +129,12 @@ public class Home extends AppCompatActivity implements NavigationView.OnNavigati
 
     cameraKitView = findViewById(R.id.camera);
     photoButton = findViewById(R.id.photoButton);
-    ivImage = (ImageView) findViewById(R.id.ivImage);
     photoButton.setOnClickListener(new View.OnClickListener()
     {
       @Override
       public void onClick(View v)
       {
-        ivImage.setVisibility(View.INVISIBLE);
         cameraKitView.setVisibility(View.VISIBLE);
-        btnChange.setVisibility(View.VISIBLE);
-        btnFlash.setVisibility(View.VISIBLE);
-
-        if (camON)
         {
           cameraKitView.captureImage(new CameraKitView.ImageCallback()
           {
@@ -165,13 +157,18 @@ public class Home extends AppCompatActivity implements NavigationView.OnNavigati
                 e.printStackTrace();
                 Log.e("CKDemo", "Exception in photo callback");
               }
+
               image_path_ = savedPhoto.getAbsolutePath();
+              Intent objIQ = new Intent(Home.this,Image.class);
+              objIQ.putExtra("path1",image_path_);
+              startActivity(objIQ);
+
             }
           });
           // loadImageInImageProcessor(image_path_);
         }
-        camON = true;
-        setFlags(true);
+
+        //setFlags(true);
       }
     });
 
@@ -201,13 +198,8 @@ public class Home extends AppCompatActivity implements NavigationView.OnNavigati
       @Override
       public void onClick(View v)
       {
-        ivImage.setImageBitmap(null);
         galleryIntent();
-        cameraKitView.setVisibility(View.INVISIBLE);
-        ivImage.setVisibility(View.VISIBLE);
-        camON = false;
-        btnChange.setVisibility(View.GONE);
-        btnFlash.setVisibility(View.GONE);
+
       }
     });
 
@@ -425,26 +417,22 @@ public class Home extends AppCompatActivity implements NavigationView.OnNavigati
   @SuppressWarnings("deprecation")
   private void onSelectFromGalleryResult(Intent data)
   {
-    Bitmap bm=null;
+
     if (data != null)
     {
-      try
-      {
-        bm = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), data.getData());
-      }
-      catch (IOException e)
-      {
-        e.printStackTrace();
-      }
+      Intent objI = new Intent(Home.this,Image.class);
+      objI.putExtra("data1",data);
+
+      Uri selectedImageUri = data.getData( );
+      String picturePath = getPath( Home.this.getApplicationContext( ), selectedImageUri );
+      image_path_ = picturePath;
+      objI.putExtra("galleryPath",picturePath);
+
+      startActivity(objI);
     }
 
-    // bm is the image from gallery
-    ivImage.setImageBitmap(bm);
 
-    Uri selectedImageUri = data.getData( );
-    String picturePath = getPath( Home.this.getApplicationContext( ), selectedImageUri );
-    image_path_ = picturePath;
-    setFlags(true);
+   // setFlags(true);
   }
 
   @Override

@@ -25,7 +25,8 @@
       </intent-filter>
     </activity>
     <activity android:name=".Settings" />
-    <activity android:name=".Home"></activity>
+    <activity android:name=".Home" />
+    <activity android:name=".Image"></activity>
   </application>
 
 </manifest>
