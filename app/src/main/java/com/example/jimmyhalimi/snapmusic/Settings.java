@@ -22,6 +22,8 @@ public class Settings extends AppCompatActivity {
         swCamera = (Switch)findViewById(R.id.swCamera);
         swStorage = (Switch)findViewById(R.id.swStorage);
 
+
+
     }
 
 
