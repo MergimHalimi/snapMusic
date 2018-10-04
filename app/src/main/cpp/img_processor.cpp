@@ -80,7 +80,7 @@ void ImageProcessor::processor(cv::Mat& image)
 
 bool ImageProcessor::initYOLOParams(void)
 {
-  this->conf_threshold_ = 0.24;
+  this->conf_threshold_ = 0.10;
   this->nms_threshold_ = 0.4;
   this->input_width_ = 416;
   this->input_height_ = 416;
@@ -163,7 +163,21 @@ bool ImageProcessor::filterWithConfidence(cv::Mat detections)
       cv::Point p2(cvRound(x_center + width / 2), cvRound(y_center + height / 2));
       cv::Rect object(p1, p2);
 
-      cv::Scalar object_roi_color(0, 255, 0);
+      //Box color
+      cv::Scalar object_roi_color;
+      if (confidence_ >= 0 && confidence_ < 0.30)
+      {
+        object_roi_color = cv::Scalar(0, 0, 255);
+      }
+      else if (confidence_ >= 0.30 && confidence_ < 0.60)
+      {
+        object_roi_color = cv::Scalar(255, 0, 0);
+      }
+      else if (confidence_ >= 0.60 && confidence_ <= 1.0)
+      {
+        object_roi_color = cv::Scalar(0, 255, 0);
+      }
+
       rectangle(this->image_, object, object_roi_color);
 
       cv::String label = cv::format("%s: %.2f", class_name_.c_str(), confidence_);
